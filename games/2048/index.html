@@ -134,13 +134,16 @@
             position: absolute;
             top: 10px;
             left: 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 80px);
+            grid-template-rows: repeat(4, 80px);
+            gap: 10px;
             width: 350px;
             height: 350px;
             pointer-events: none;
         }
 
         .tile {
-            position: absolute;
             width: 80px;
             height: 80px;
             border-radius: 10px;
@@ -280,6 +283,9 @@
                 font-size: 14px;
             }
             .tiles-layer {
+                grid-template-columns: repeat(4, 65px);
+                grid-template-rows: repeat(4, 65px);
+                gap: 8px;
                 width: 284px;
                 height: 284px;
             }
@@ -408,8 +414,8 @@
                         const tile = document.createElement('div');
                         tile.className = `tile ${getTileClass(grid[r][c])}`;
                         tile.textContent = grid[r][c];
-                        tile.style.left = (OFFSET + c * (GRID_SIZE + GAP)) + 'px';
-                        tile.style.top = (OFFSET + r * (GRID_SIZE + GAP)) + 'px';
+                        tile.style.gridColumnStart = c + 1;
+                        tile.style.gridRowStart = r + 1;
                         tilesLayer.appendChild(tile);
                     }
                 }
@@ -430,18 +436,18 @@
                         // Проверяем, есть ли анимация для этой плитки
                         const anim = animations.find(a => a.toR === r && a.toC === c);
                         if (anim) {
-                            tile.style.left = (OFFSET + anim.fromC * (GRID_SIZE + GAP)) + 'px';
-                            tile.style.top = (OFFSET + anim.fromR * (GRID_SIZE + GAP)) + 'px';
+                            tile.style.gridColumnStart = anim.fromC + 1;
+                            tile.style.gridRowStart = anim.fromR + 1;
                             requestAnimationFrame(() => {
-                                tile.style.left = (OFFSET + c * (GRID_SIZE + GAP)) + 'px';
-                                tile.style.top = (OFFSET + r * (GRID_SIZE + GAP)) + 'px';
+                                tile.style.gridColumnStart = c + 1;
+                                tile.style.gridRowStart = r + 1;
                             });
                             if (anim.merged) {
                                 tile.classList.add('merge');
                             }
                         } else {
-                            tile.style.left = (OFFSET + c * (GRID_SIZE + GAP)) + 'px';
-                            tile.style.top = (OFFSET + r * (GRID_SIZE + GAP)) + 'px';
+                            tile.style.gridColumnStart = c + 1;
+                            tile.style.gridRowStart = r + 1;
                         }
 
                         tilesLayer.appendChild(tile);
@@ -454,8 +460,8 @@
                 const tile = document.createElement('div');
                 tile.className = `tile ${getTileClass(t.value)} new`;
                 tile.textContent = t.value;
-                tile.style.left = (OFFSET + t.c * (GRID_SIZE + GAP)) + 'px';
-                tile.style.top = (OFFSET + t.r * (GRID_SIZE + GAP)) + 'px';
+                tile.style.gridColumnStart = t.c + 1;
+                tile.style.gridRowStart = t.r + 1;
                 tilesLayer.appendChild(tile);
             });
         }
