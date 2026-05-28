@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flappy Bird — GameHub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #0d0d0d;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        .header {
+            width: 100%;
+            max-width: 450px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .back-btn {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: #2a2a2a; color: #fff; }
+        .game-title { font-size: 20px; font-weight: 700; }
+        .header-right { width: 80px; }
+        .game-area { position: relative; margin: 10px 0; }
+        canvas {
+            display: block;
+            border-radius: 16px;
+            border: 2px solid #2a2a2a;
+            max-width: 95vw;
+            max-height: 65vh;
+        }
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.78);
+            border-radius: 16px;
+            z-index: 10;
+        }
+        .overlay.hidden { display: none; }
+        .overlay h2 { font-size: 32px; margin-bottom: 8px; }
+        .overlay p { color: #aaa; margin-bottom: 8px; font-size: 16px; }
+        .overlay .score-big { font-size: 48px; font-weight: 800; color: #ffcc00; margin: 4px 0 16px; }
+        .btn {
+            padding: 12px 32px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 4px;
+        }
+        .btn-primary { background: #ffcc00; color: #000; }
+        .btn-primary:hover { background: #e6b800; transform: scale(1.05); }
+        .btn-secondary { background: #2a2a2a; color: #fff; }
+        .btn-secondary:hover { background: #3a3a3a; }
+        .skin-selector {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0 16px;
+        }
+        .skin-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .skin-btn:hover { transform: scale(1.15); }
+        .skin-btn.active { border-color: #ffcc00; box-shadow: 0 0 10px rgba(255,204,0,0.4); }
+        .score-panel {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .score-box {
+            background: #1a1a1a;
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            flex: 1;
+            text-align: center;
+        }
+        .score-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .score-value { font-size: 22px; font-weight: 700; color: #ffcc00; }
+        .controls-hint { margin-top: 8px; color: #666; font-size: 13px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="../../index.html" class="back-btn">← Назад</a>
+        <div class="game-title">🐦 Flappy Bird</div>
+        <div class="header-right"></div>
+    </div>
+
+    <div class="score-panel">
+        <div class="score-box">
+            <div class="score-label">Счёт</div>
+            <div class="score-value" id="score">0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Рекорд</div>
+            <div class="score-value" id="highScore">0</div>
+        </div>
+    </div>
+
+    <div class="game-area">
+        <canvas id="game" width="400" height="600"></canvas>
+
+        <div class="overlay" id="startScreen">
+            <h2>🐦 Flappy Bird</h2>
+            <p>Выбери птичку:</p>
+            <div class="skin-selector" id="skinSelector">
+                <div class="skin-btn active" data-skin="yellow" style="background:#ffcc00;">🐤</div>
+                <div class="skin-btn" data-skin="blue" style="background:#448aff;">🐦</div>
+                <div class="skin-btn" data-skin="red" style="background:#ff5252;">🦜</div>
+                <div class="skin-btn" data-skin="green" style="background:#69f0ae;">🦆</div>
+            </div>
+            <button class="btn btn-primary" id="startBtn">Играть</button>
+        </div>
+
+        <div class="overlay hidden" id="gameOverScreen">
+            <h2>💥 Бум!</h2>
+            <p>Счёт:</p>
+            <div class="score-big" id="finalScore">0</div>
+            <div>
+                <button class="btn btn-primary" id="restartBtn">Ещё раз</button>
+                <a href="../../index.html" class="btn btn-secondary" style="display:inline-block;text-decoration:none;">Меню</a>
+            </div>
+        </div>
+    </div>
+
+    <p class="controls-hint">Пробел / клик / тап — прыжок</p>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+
+        const GRAVITY = 0.32;
+        const JUMP = -6.5;
+        const PIPE_WIDTH = 50;
+        const PIPE_GAP = 155;
+        const PIPE_SPEED_BASE = 2.5;
+        const GROUND_HEIGHT = 40;
+        const BIRD_RADIUS = 12;
+
+        // Скины
+        const SKINS = {
+            yellow: { body: '#ffcc00', wing: '#e6b800', beak: '#ff9800', eye: '#000' },
+            blue:   { body: '#448aff', wing: '#2962ff', beak: '#ffab00', eye: '#fff' },
+            red:    { body: '#ff5252', wing: '#d32f2f', beak: '#ffeb3b', eye: '#000' },
+            green:  { body: '#69f0ae', wing: '#00c853', beak: '#ff6d00', eye: '#000' }
+        };
+        let currentSkin = localStorage.getItem('flappySkin') || 'yellow';
+
+        // Аудио
+        let audioCtx = null;
+        function initAudio() { if (audioCtx) return; try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+        function playFlapSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(650, audioCtx.currentTime + 0.04);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+        }
+        function playScoreSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+        }
+        function playHitSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        // Состояние
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('flappyHighScore') || '0');
+        let isRunning = false;
+        let animationId = null;
+        let bird = { x: 80, y: 250, vy: 0, angle: 0, wing: 0 };
+        let pipes = [];
+        let frameCount = 0;
+        let clouds = [];
+        let stars = [];
+        let celestialX = 0;
+
+        // DOM
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const finalScoreEl = document.getElementById('finalScore');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+
+        highScoreEl.textContent = highScore;
+
+        // Селектор скинов
+        document.querySelectorAll('.skin-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.skin-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentSkin = btn.dataset.skin;
+                localStorage.setItem('flappySkin', currentSkin);
+            });
+        });
+        // Установить активный скин при загрузке
+        document.querySelectorAll('.skin-btn').forEach(btn => {
+            if (btn.dataset.skin === currentSkin) { btn.classList.add('active'); }
+            else { btn.classList.remove('active'); }
+        });
+
+        function initClouds() {
+            clouds = [];
+            for (let i = 0; i < 5; i++) {
+                clouds.push({ x: Math.random() * canvas.width, y: 40 + Math.random() * 150, w: 40 + Math.random() * 50, speed: 0.2 + Math.random() * 0.3 });
+            }
+        }
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 60; i++) {
+                stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.7, size: Math.random() * 1.5 + 0.5, twinkle: Math.random() * Math.PI * 2 });
+            }
+        }
+
+        function getTimeOfDay(s) {
+            const phase = Math.floor(s / 6) % 4;
+            return ['day', 'sunset', 'night', 'dawn'][phase];
+        }
+
+        function getSkyColors(time) {
+            if (time === 'day') return ['#4fc3f7', '#81d4fa'];
+            if (time === 'sunset') return ['#ff7043', '#ab47bc'];
+            if (time === 'night') return ['#0d1b2a', '#1b263b'];
+            if (time === 'dawn') return ['#7c4dff', '#ff80ab'];
+            return ['#4fc3f7', '#81d4fa'];
+        }
+
+        function resetGame() {
+            bird = { x: 80, y: 250, vy: 0, angle: 0, wing: 0 };
+            pipes = []; score = 0; frameCount = 0;
+            scoreEl.textContent = '0';
+            initClouds(); initStars();
+            celestialX = 0;
+            isRunning = true;
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            if (animationId) cancelAnimationFrame(animationId);
+            gameLoop();
+        }
+
+        function jump() {
+            if (!isRunning) return;
+            bird.vy = JUMP;
+            bird.wing = 1;
+            playFlapSound();
+        }
+
+        function spawnPipe() {
+            const minY = 60;
+            const maxY = canvas.height - GROUND_HEIGHT - PIPE_GAP - 60;
+            const topHeight = minY + Math.random() * (maxY - minY);
+            pipes.push({ x: canvas.width, topHeight, gap: PIPE_GAP, passed: false });
+        }
+
+        function update() {
+            if (!isRunning) return;
+            frameCount++;
+            celestialX += 0.15;
+
+            clouds.forEach(c => {
+                c.x -= c.speed;
+                if (c.x + c.w < 0) { c.x = canvas.width + 20; c.y = 40 + Math.random() * 150; }
+            });
+
+            bird.vy += GRAVITY;
+            bird.y += bird.vy;
+            bird.angle = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, bird.vy * 0.06));
+            bird.wing *= 0.9;
+
+            if (bird.y + BIRD_RADIUS > canvas.height - GROUND_HEIGHT) {
+                bird.y = canvas.height - GROUND_HEIGHT - BIRD_RADIUS;
+                gameOver(); return;
+            }
+            if (bird.y - BIRD_RADIUS < 0) { bird.y = BIRD_RADIUS; bird.vy = 0; }
+
+            const pipeSpeed = PIPE_SPEED_BASE + score * 0.1;
+            if (frameCount % 100 === 0) spawnPipe();
+
+            pipes.forEach(p => {
+                p.x -= pipeSpeed;
+                if (!p.passed && p.x + PIPE_WIDTH < bird.x) {
+                    p.passed = true; score++; scoreEl.textContent = score; playScoreSound();
+                }
+                if (bird.x + BIRD_RADIUS > p.x && bird.x - BIRD_RADIUS < p.x + PIPE_WIDTH) {
+                    if (bird.y - BIRD_RADIUS < p.topHeight || bird.y + BIRD_RADIUS > p.topHeight + p.gap) {
+                        gameOver();
+                    }
+                }
+            });
+            pipes = pipes.filter(p => p.x + PIPE_WIDTH > -10);
+        }
+
+        function drawBackground(time) {
+            const colors = getSkyColors(time);
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, colors[0]);
+            grad.addColorStop(1, colors[1]);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Солнце / Луна
+            const cx = (celestialX % (canvas.width + 100)) - 50;
+            const cy = time === 'day' ? 60 : time === 'sunset' ? 100 : time === 'night' ? 50 : 80;
+            if (time === 'day') {
+                ctx.fillStyle = '#ffeb3b';
+                ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 30;
+                ctx.beginPath(); ctx.arc(cx, cy, 25, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+            } else if (time === 'sunset') {
+                ctx.fillStyle = '#ff5722';
+                ctx.shadowColor = '#ff5722'; ctx.shadowBlur = 25;
+                ctx.beginPath(); ctx.arc(cx, cy, 28, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+            } else if (time === 'night') {
+                ctx.fillStyle = '#e0e0e0';
+                ctx.shadowColor = '#e0e0e0'; ctx.shadowBlur = 15;
+                ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+                // Звёзды
+                stars.forEach(s => {
+                    const twinkle = Math.sin(Date.now() * 0.003 + s.twinkle) * 0.5 + 0.5;
+                    ctx.fillStyle = `rgba(255,255,255,${twinkle * 0.8})`;
+                    ctx.fillRect(s.x, s.y, s.size, s.size);
+                });
+            } else if (time === 'dawn') {
+                ctx.fillStyle = '#ffca28';
+                ctx.shadowColor = '#ffca28'; ctx.shadowBlur = 20;
+                ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+            }
+
+            // Горы на заднем плане
+            ctx.fillStyle = time === 'night' ? '#0a1520' : time === 'sunset' ? '#4a148c' : '#2e7d32';
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - GROUND_HEIGHT);
+            for (let i = 0; i <= canvas.width; i += 40) {
+                ctx.lineTo(i, canvas.height - GROUND_HEIGHT - 30 - Math.sin(i * 0.02) * 20);
+            }
+            ctx.lineTo(canvas.width, canvas.height - GROUND_HEIGHT);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // Облака
+            const cloudAlpha = time === 'night' ? 0.2 : 0.6;
+            ctx.fillStyle = `rgba(255,255,255,${cloudAlpha})`;
+            clouds.forEach(c => {
+                ctx.beginPath(); ctx.ellipse(c.x, c.y, c.w / 2, c.w / 4, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(c.x + c.w * 0.25, c.y - c.w * 0.1, c.w * 0.35, c.w * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+            });
+        }
+
+        function draw() {
+            const time = getTimeOfDay(score);
+            drawBackground(time);
+
+            // Трубы
+            const pipeColor = time === 'night' ? '#2e7d32' : '#4caf50';
+            const pipeCap = time === 'night' ? '#1b5e20' : '#388e3c';
+            pipes.forEach(p => {
+                ctx.fillStyle = pipeColor;
+                ctx.fillRect(p.x, 0, PIPE_WIDTH, p.topHeight);
+                ctx.fillStyle = pipeCap;
+                ctx.fillRect(p.x - 2, p.topHeight - 20, PIPE_WIDTH + 4, 20);
+                ctx.fillStyle = pipeColor;
+                ctx.fillRect(p.x, p.topHeight + p.gap, PIPE_WIDTH, canvas.height - p.topHeight - p.gap - GROUND_HEIGHT);
+                ctx.fillStyle = pipeCap;
+                ctx.fillRect(p.x - 2, p.topHeight + p.gap, PIPE_WIDTH + 4, 20);
+            });
+
+            // Земля
+            ctx.fillStyle = time === 'night' ? '#3e2723' : '#ded895';
+            ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
+            ctx.fillStyle = time === 'night' ? '#1b5e20' : '#73bf2e';
+            ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, 6);
+
+            // Птица
+            const skin = SKINS[currentSkin];
+            ctx.save();
+            ctx.translate(bird.x, bird.y);
+            ctx.rotate(bird.angle);
+
+            const wingY = bird.wing * 6;
+            ctx.fillStyle = skin.wing;
+            ctx.beginPath();
+            ctx.moveTo(-4, 2); ctx.lineTo(-12, -4 + wingY); ctx.lineTo(-4, -2 + wingY);
+            ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = skin.body;
+            ctx.beginPath(); ctx.arc(0, 0, BIRD_RADIUS, 0, Math.PI * 2); ctx.fill();
+
+            // Глаз
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(4, -4, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = skin.eye;
+            ctx.beginPath(); ctx.arc(5, -4, 2, 0, Math.PI * 2); ctx.fill();
+
+            // Клюв
+            ctx.fillStyle = skin.beak;
+            ctx.beginPath();
+            ctx.moveTo(8, 0); ctx.lineTo(16, 3); ctx.lineTo(8, 6);
+            ctx.closePath(); ctx.fill();
+
+            ctx.restore();
+        }
+
+        function gameLoop() { if (!isRunning) return; update(); draw(); animationId = requestAnimationFrame(gameLoop); }
+
+        function gameOver() {
+            isRunning = false; cancelAnimationFrame(animationId); playHitSound();
+            if (score > highScore) { highScore = score; localStorage.setItem('flappyHighScore', highScore); highScoreEl.textContent = highScore; }
+            finalScoreEl.textContent = score; gameOverScreen.classList.remove('hidden');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (!isRunning && !gameOverScreen.classList.contains('hidden')) resetGame();
+                else if (!isRunning && !startScreen.classList.contains('hidden')) { initAudio(); resetGame(); }
+                else jump();
+            }
+        });
+        canvas.addEventListener('mousedown', (e) => {
+            if (!isRunning && !gameOverScreen.classList.contains('hidden')) resetGame();
+            else if (!isRunning && !startScreen.classList.contains('hidden')) { initAudio(); resetGame(); }
+            else jump();
+        });
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!isRunning && !gameOverScreen.classList.contains('hidden')) resetGame();
+            else if (!isRunning && !startScreen.classList.contains('hidden')) { initAudio(); resetGame(); }
+            else jump();
+        }, { passive: false });
+
+        document.getElementById('startBtn').addEventListener('click', () => { initAudio(); resetGame(); });
+        document.getElementById('restartBtn').addEventListener('click', () => { initAudio(); resetGame(); });
+
+        initClouds(); initStars(); draw();
+    </script>
+</body>
+</html>

@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pong — GameHub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #0d0d0d;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Шапка */
+        .header {
+            width: 100%;
+            max-width: 800px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .back-btn {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #2a2a2a;
+            color: #fff;
+        }
+
+        .game-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .header-right {
+            width: 80px;
+        }
+
+        /* Игровая зона */
+        .game-area {
+            position: relative;
+            margin: 10px 0;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 16px;
+            border: 2px solid #2a2a2a;
+            background: #111;
+            max-width: 95vw;
+            max-height: 55vh;
+        }
+
+        /* Оверлеи */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.85);
+            border-radius: 16px;
+            z-index: 10;
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        .overlay h2 {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .overlay p {
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .overlay .score-big {
+            font-size: 48px;
+            font-weight: 800;
+            color: #ffcc00;
+            margin: 8px 0 20px;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 4px;
+        }
+
+        .btn-primary {
+            background: #ffcc00;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #e6b800;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: #2a2a2a;
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #3a3a3a;
+        }
+
+        /* Счёт */
+        .score-panel {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .score-box {
+            background: #1a1a1a;
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            flex: 1;
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffcc00;
+        }
+
+        /* Управление */
+        .controls-hint {
+            margin-top: 12px;
+            color: #666;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .mobile-controls {
+            display: none;
+            margin-top: 16px;
+            gap: 8px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mobile-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .mobile-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .mobile-btn:active {
+            background: #2a2a2a;
+            transform: scale(0.95);
+        }
+
+        .mobile-btn.wide {
+            width: 100px;
+            font-size: 20px;
+        }
+
+        /* Пауза индикатор */
+        .pause-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 5;
+        }
+
+        .pause-indicator.visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .mobile-controls {
+                display: flex;
+            }
+            .controls-hint {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="../../index.html" class="back-btn">← Назад</a>
+        <div class="game-title">🏓 Pong</div>
+        <div class="header-right"></div>
+    </div>
+
+    <div class="score-panel">
+        <div class="score-box">
+            <div class="score-label">Счёт</div>
+            <div class="score-value" id="score">0 : 0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Рекорд</div>
+            <div class="score-value" id="highScore">0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Уровень</div>
+            <div class="score-value" id="level">1</div>
+        </div>
+    </div>
+
+    <div class="game-area">
+        <canvas id="game" width="800" height="500"></canvas>
+
+        <!-- Стартовый экран -->
+        <div class="overlay" id="startScreen">
+            <h2>🏓 Pong</h2>
+            <p>Сыграй против ИИ в классический пинг-понг</p>
+            <div class="score-big" id="startHighScore">0</div>
+            <button class="btn btn-primary" id="startBtn">Играть</button>
+        </div>
+
+        <!-- Game Over -->
+        <div class="overlay hidden" id="gameOverScreen">
+            <h2 id="endTitle">🏆 Победа!</h2>
+            <p id="endSubtitle">Финальный счёт:</p>
+            <div class="score-big" id="finalScore">0 : 0</div>
+            <div>
+                <button class="btn btn-primary" id="restartBtn">Ещё раз</button>
+                <a href="../../index.html" class="btn btn-secondary" style="display:inline-block;text-decoration:none;">Меню</a>
+            </div>
+        </div>
+
+        <!-- Пауза -->
+        <div class="pause-indicator" id="pauseIcon">⏸</div>
+    </div>
+
+    <p class="controls-hint">Управление: мышь / тач • ↑↓ / WS • Пробел — пауза</p>
+
+    <!-- Мобильное управление -->
+    <div class="mobile-controls">
+        <div class="mobile-row">
+            <button class="mobile-btn" data-dir="up">↑</button>
+        </div>
+        <div class="mobile-row">
+            <button class="mobile-btn" data-dir="down">↓</button>
+            <button class="mobile-btn wide" id="pauseBtn">⏸</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+
+        // Игровые константы
+        const PADDLE_WIDTH = 12;
+        const PADDLE_HEIGHT = 90;
+        const BALL_RADIUS = 8;
+        const WIN_SCORE = 5;
+        const BASE_BALL_SPEED = 5.5;
+        const PADDLE_SPEED = 6.5;
+        const AI_SPEED_BASE = 4.2;
+
+        // Состояние
+        let playerScore = 0;
+        let aiScore = 0;
+        let winStreak = parseInt(localStorage.getItem('pongWinStreak') || '0');
+        let highScore = parseInt(localStorage.getItem('pongHighScore') || '0');
+        let level = 1;
+        let isRunning = false;
+        let isPaused = false;
+        let animationId = null;
+
+        let playerY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+        let aiY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        let ballVX = BASE_BALL_SPEED;
+        let ballVY = BASE_BALL_SPEED * 0.6;
+        let playerDir = 0;
+
+        // Аудио
+        let audioCtx = null;
+        function initAudio() {
+            if (audioCtx) return;
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+        }
+        function playPaddleHit() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.12);
+        }
+        function playWallHit() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(330, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+        function playScoreSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+        function playWinSound() {
+            if (!audioCtx) return;
+            const notes = [523, 659, 784, 1047];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.1);
+                gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + i * 0.1 + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.1 + 0.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + i * 0.1);
+                osc.stop(audioCtx.currentTime + i * 0.1 + 0.25);
+            });
+        }
+        function playLoseSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        // DOM
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const levelEl = document.getElementById('level');
+        const finalScoreEl = document.getElementById('finalScore');
+        const startHighScoreEl = document.getElementById('startHighScore');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const endTitle = document.getElementById('endTitle');
+        const endSubtitle = document.getElementById('endSubtitle');
+
+        highScoreEl.textContent = highScore;
+        startHighScoreEl.textContent = highScore;
+
+        function resetBall(direction) {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            const speed = BASE_BALL_SPEED + (level - 1) * 0.6;
+            const angle = (Math.random() * 0.8 - 0.4); // ±0.4 радиана
+            ballVX = direction * speed * Math.cos(angle);
+            ballVY = speed * Math.sin(angle);
+        }
+
+        function initGame() {
+            initAudio();
+            playerScore = 0;
+            aiScore = 0;
+            level = 1;
+            playerY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+            aiY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+            playerDir = 0;
+            resetBall(Math.random() > 0.5 ? 1 : -1);
+            updateScore();
+            isRunning = true;
+            isPaused = false;
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            pauseIcon.classList.remove('visible');
+
+            if (animationId) cancelAnimationFrame(animationId);
+            gameLoop();
+        }
+
+        function updateScore() {
+            scoreEl.textContent = `${playerScore} : ${aiScore}`;
+            levelEl.textContent = level;
+        }
+
+        function getAISpeed() {
+            return AI_SPEED_BASE + (level - 1) * 0.5;
+        }
+
+        function update() {
+            if (isPaused) return;
+
+            // Движение игрока
+            playerY += playerDir * PADDLE_SPEED;
+            playerY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, playerY));
+
+            // Движение ИИ
+            const aiCenter = aiY + PADDLE_HEIGHT / 2;
+            const diff = ballY - aiCenter;
+            const aiSpeed = getAISpeed();
+            if (Math.abs(diff) > aiSpeed) {
+                aiY += Math.sign(diff) * aiSpeed;
+            } else {
+                aiY += diff;
+            }
+            aiY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, aiY));
+
+            // Движение мяча
+            ballX += ballVX;
+            ballY += ballVY;
+
+            // Отскок от верхней/нижней стенки
+            if (ballY - BALL_RADIUS < 0) {
+                ballY = BALL_RADIUS;
+                ballVY = Math.abs(ballVY);
+                playWallHit();
+            } else if (ballY + BALL_RADIUS > canvas.height) {
+                ballY = canvas.height - BALL_RADIUS;
+                ballVY = -Math.abs(ballVY);
+                playWallHit();
+            }
+
+            // Отскок от ракетки игрока
+            if (
+                ballX - BALL_RADIUS < PADDLE_WIDTH + 10 &&
+                ballX + BALL_RADIUS > 10 &&
+                ballY > playerY &&
+                ballY < playerY + PADDLE_HEIGHT &&
+                ballVX < 0
+            ) {
+                const hitPos = (ballY - (playerY + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
+                const speed = Math.sqrt(ballVX * ballVX + ballVY * ballVY) * 1.03;
+                const maxBounce = Math.PI / 3;
+                const angle = hitPos * maxBounce;
+                ballVX = Math.abs(speed * Math.cos(angle));
+                ballVY = speed * Math.sin(angle);
+                ballX = PADDLE_WIDTH + 10 + BALL_RADIUS;
+                playPaddleHit();
+            }
+
+            // Отскок от ракетки ИИ
+            if (
+                ballX + BALL_RADIUS > canvas.width - PADDLE_WIDTH - 10 &&
+                ballX - BALL_RADIUS < canvas.width - 10 &&
+                ballY > aiY &&
+                ballY < aiY + PADDLE_HEIGHT &&
+                ballVX > 0
+            ) {
+                const hitPos = (ballY - (aiY + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
+                const speed = Math.sqrt(ballVX * ballVX + ballVY * ballVY) * 1.03;
+                const maxBounce = Math.PI / 3;
+                const angle = hitPos * maxBounce;
+                ballVX = -Math.abs(speed * Math.cos(angle));
+                ballVY = speed * Math.sin(angle);
+                ballX = canvas.width - PADDLE_WIDTH - 10 - BALL_RADIUS;
+                playPaddleHit();
+            }
+
+            // Гол игрока
+            if (ballX > canvas.width + BALL_RADIUS * 2) {
+                playerScore++;
+                playScoreSound();
+                if (playerScore >= WIN_SCORE) {
+                    winRound(true);
+                    return;
+                }
+                updateScore();
+                resetBall(-1);
+            }
+
+            // Гол ИИ
+            if (ballX < -BALL_RADIUS * 2) {
+                aiScore++;
+                playScoreSound();
+                if (aiScore >= WIN_SCORE) {
+                    winRound(false);
+                    return;
+                }
+                updateScore();
+                resetBall(1);
+            }
+        }
+
+        function winRound(playerWon) {
+            isRunning = false;
+            cancelAnimationFrame(animationId);
+
+            if (playerWon) {
+                playWinSound();
+                winStreak++;
+                if (winStreak > highScore) {
+                    highScore = winStreak;
+                    localStorage.setItem('pongHighScore', highScore);
+                }
+                localStorage.setItem('pongWinStreak', winStreak);
+                level++;
+                highScoreEl.textContent = highScore;
+
+                endTitle.textContent = '🏆 Победа!';
+                endSubtitle.textContent = `Серия побед: ${winStreak} • Уровень ${level - 1} пройден`;
+                finalScoreEl.textContent = `${playerScore} : ${aiScore}`;
+                gameOverScreen.classList.remove('hidden');
+
+                // Автоматический рестарт через 1.5 секунды для следующего уровня
+                setTimeout(() => {
+                    if (!isRunning && !gameOverScreen.classList.contains('hidden')) {
+                        initGame();
+                    }
+                }, 1800);
+            } else {
+                playLoseSound();
+                winStreak = 0;
+                localStorage.setItem('pongWinStreak', '0');
+
+                endTitle.textContent = '😞 Поражение';
+                endSubtitle.textContent = 'ИИ оказался сильнее';
+                finalScoreEl.textContent = `${playerScore} : ${aiScore}`;
+                gameOverScreen.classList.remove('hidden');
+            }
+        }
+
+        function draw() {
+            // Фон
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Центральная линия (пунктир)
+            ctx.strokeStyle = '#2a2a2a';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([12, 12]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Ракетка игрока
+            ctx.shadowColor = '#ffcc00';
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = '#ffcc00';
+            roundRect(ctx, 10, playerY, PADDLE_WIDTH, PADDLE_HEIGHT, 4);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Ракетка ИИ
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#fff';
+            roundRect(ctx, canvas.width - 10 - PADDLE_WIDTH, aiY, PADDLE_WIDTH, PADDLE_HEIGHT, 4);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Мяч
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Счёт на поле (полупрозрачный)
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            ctx.font = 'bold 120px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(playerScore, canvas.width / 2 - 80, canvas.height / 2);
+            ctx.fillText(aiScore, canvas.width / 2 + 80, canvas.height / 2);
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function gameLoop() {
+            if (!isRunning) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function togglePause() {
+            if (!isRunning || gameOverScreen.classList.contains('hidden') === false) return;
+            isPaused = !isPaused;
+            pauseIcon.classList.toggle('visible', isPaused);
+        }
+
+        // Управление клавиатурой
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+
+            if (key === ' ' || key === 'escape') {
+                e.preventDefault();
+                togglePause();
+                return;
+            }
+
+            if (!isRunning) return;
+
+            if (key === 'arrowup' || key === 'w') {
+                e.preventDefault();
+                playerDir = -1;
+            } else if (key === 'arrowdown' || key === 's') {
+                e.preventDefault();
+                playerDir = 1;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'arrowup' || key === 'w' || key === 'arrowdown' || key === 's') {
+                playerDir = 0;
+            }
+        });
+
+        // Мышь / тач на canvas
+        function handlePointerMove(y) {
+            if (!isRunning || isPaused) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleY = canvas.height / rect.height;
+            const canvasY = (y - rect.top) * scaleY;
+            playerY = canvasY - PADDLE_HEIGHT / 2;
+            playerY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, playerY));
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            handlePointerMove(e.clientY);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            handlePointerMove(e.touches[0].clientY);
+        }, { passive: false });
+
+        // Мобильное управление
+        document.querySelectorAll('.mobile-btn[data-dir]').forEach(btn => {
+            const startDir = (dir) => {
+                if (!isRunning) return;
+                playerDir = dir === 'up' ? -1 : 1;
+            };
+            const stopDir = () => { playerDir = 0; };
+
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); startDir(btn.dataset.dir); });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); stopDir(); });
+            btn.addEventListener('mousedown', () => startDir(btn.dataset.dir));
+            btn.addEventListener('mouseup', stopDir);
+            btn.addEventListener('mouseleave', stopDir);
+        });
+
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('pauseBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            togglePause();
+        });
+
+        // Кнопки
+        document.getElementById('startBtn').addEventListener('click', initGame);
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+
+        // Первоначальная отрисовка
+        draw();
+    </script>
+</body>
+</html>

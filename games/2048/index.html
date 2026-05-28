@@ -366,6 +366,55 @@
         let hasWon = false;
         let isAnimating = false;
 
+        // Аудио
+        let audioCtx = null;
+        function initAudio() {
+            if (audioCtx) return;
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+        }
+        function playSlideSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.06);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+        function playMergeSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+        function playGameOverSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
         highScoreEl.textContent = highScore;
 
         function posToPixel(r, c) {
@@ -376,6 +425,7 @@
         }
 
         function initGame() {
+            initAudio();
             grid = Array.from({ length: 4 }, () => Array(4).fill(0));
             score = 0;
             hasWon = false;
@@ -485,17 +535,19 @@
         function slideRowLeft(row) {
             let filtered = row.filter(x => x !== 0);
             let result = [];
+            let merged = false;
             for (let i = 0; i < filtered.length; i++) {
                 if (i < filtered.length - 1 && filtered[i] === filtered[i + 1]) {
                     result.push(filtered[i] * 2);
                     score += filtered[i] * 2;
                     i++;
+                    merged = true;
                 } else {
                     result.push(filtered[i]);
                 }
             }
             while (result.length < 4) result.push(0);
-            return { row: result, changed: JSON.stringify(row) !== JSON.stringify(result) };
+            return { row: result, changed: JSON.stringify(row) !== JSON.stringify(result), merged };
         }
 
         function moveLeft() {
@@ -547,13 +599,48 @@
 
             const oldGrid = grid.map(row => [...row]);
             let changed = false;
-            if (direction === 'left') changed = moveLeft();
-            if (direction === 'right') changed = moveRight();
-            if (direction === 'up') changed = moveUp();
-            if (direction === 'down') changed = moveDown();
+            let merged = false;
+            if (direction === 'left') {
+                for (let r = 0; r < 4; r++) {
+                    const res = slideRowLeft(grid[r]);
+                    if (res.changed) { changed = true; grid[r] = res.row; }
+                    if (res.merged) merged = true;
+                }
+            }
+            if (direction === 'right') {
+                for (let r = 0; r < 4; r++) {
+                    const res = slideRowLeft([...grid[r]].reverse());
+                    if (res.changed) { changed = true; grid[r] = res.row.reverse(); }
+                    if (res.merged) merged = true;
+                }
+            }
+            if (direction === 'up') {
+                for (let c = 0; c < 4; c++) {
+                    const col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]];
+                    const res = slideRowLeft(col);
+                    if (res.changed) {
+                        changed = true;
+                        for (let r = 0; r < 4; r++) grid[r][c] = res.row[r];
+                    }
+                    if (res.merged) merged = true;
+                }
+            }
+            if (direction === 'down') {
+                for (let c = 0; c < 4; c++) {
+                    const res = slideRowLeft([grid[0][c], grid[1][c], grid[2][c], grid[3][c]].reverse());
+                    if (res.changed) {
+                        changed = true;
+                        const newCol = res.row.reverse();
+                        for (let r = 0; r < 4; r++) grid[r][c] = newCol[r];
+                    }
+                    if (res.merged) merged = true;
+                }
+            }
 
             if (changed) {
                 isAnimating = true;
+                if (merged) playMergeSound();
+                else playSlideSound();
                 scoreEl.textContent = score;
                 if (score > highScore) {
                     highScore = score;
@@ -571,6 +658,7 @@
 
                 if (isGameOver()) {
                     setTimeout(() => {
+                        playGameOverSound();
                         finalScoreEl.textContent = score;
                         gameOverScreen.classList.remove('hidden');
                     }, 400);

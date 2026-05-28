@@ -375,6 +375,71 @@
         let lastTime = 0;
         let animationId = null;
 
+        // Аудио
+        let audioCtx = null;
+        function initAudio() {
+            if (audioCtx) return;
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+        }
+        function playDropSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+        function playClearSound() {
+            if (!audioCtx) return;
+            const notes = [523, 659, 784, 1047];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.06);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.06);
+                gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + i * 0.06 + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.06 + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + i * 0.06);
+                osc.stop(audioCtx.currentTime + i * 0.06 + 0.18);
+            });
+        }
+        function playRotateSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+        function playGameOverSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
         document.getElementById('highScore').textContent = highScore;
         document.getElementById('startHighScore').textContent = highScore;
 
@@ -435,6 +500,7 @@
                     }
                 });
             });
+            playDropSound();
         }
 
         function clearLines() {
@@ -448,6 +514,7 @@
                 }
             }
             if (linesCleared > 0) {
+                playClearSound();
                 lines += linesCleared;
                 score += [0, 100, 300, 500, 800][linesCleared] * level;
                 level = Math.floor(lines / 10) + 1;
@@ -567,6 +634,7 @@
 
         function rotatePiece() {
             if (!isRunning || isPaused) return;
+            playRotateSound();
             const rotated = rotate(currentPiece);
             if (isValid(rotated)) {
                 currentPiece = rotated;
@@ -616,6 +684,7 @@
         function gameOver() {
             isRunning = false;
             cancelAnimationFrame(animationId);
+            playGameOverSound();
             document.getElementById('finalScore').textContent = score;
             document.getElementById('gameOverScreen').classList.remove('hidden');
         }
@@ -651,6 +720,7 @@
         }
 
         function initGame() {
+            initAudio();
             board = createBoard();
             score = 0;
             lines = 0;
