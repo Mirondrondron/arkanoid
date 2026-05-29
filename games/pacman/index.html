@@ -295,6 +295,70 @@
         let frightenedTimer = 0;
         let lastMoveTime = 0;
         const MOVE_INTERVAL = 220;
+        let wakaToggle = false;
+
+        // ====== ЗВУКИ ======
+        const Sound = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            tone(freq, duration, type = 'square', vol = 0.08) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            waka() {
+                // Оригинальный чередующийся "вака-вака"
+                wakaToggle = !wakaToggle;
+                this.tone(wakaToggle ? 350 : 280, 0.08, 'sawtooth', 0.06);
+            },
+            start() {
+                // Джингл начала игры
+                const notes = [440, 554, 659, 880];
+                notes.forEach((f, i) => {
+                    setTimeout(() => this.tone(f, 0.15, 'square', 0.1), i * 120);
+                });
+            },
+            eatGhost() {
+                this.tone(900, 0.15, 'square', 0.1);
+                setTimeout(() => this.tone(1200, 0.2, 'square', 0.1), 80);
+            },
+            powerPellet() {
+                this.tone(220, 0.2, 'sawtooth', 0.08);
+            },
+            death() {
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.6);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            },
+            lifeLost() {
+                this.tone(220, 0.3, 'square', 0.1);
+                setTimeout(() => this.tone(180, 0.4, 'square', 0.1), 150);
+            }
+        };
 
         function initGame() {
             grid = MAP.map(row => [...row]);
@@ -320,6 +384,8 @@
             updateUI();
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
+            Sound.init();
+            Sound.start();
             if (gameLoop) cancelAnimationFrame(gameLoop);
             gameLoop = requestAnimationFrame(update);
         }
@@ -360,11 +426,13 @@
                     grid[ny][nx] = 0;
                     score += 10;
                     dotsCount--;
+                    Sound.waka();
                 } else if (grid[ny][nx] === 3) {
                     grid[ny][nx] = 0;
                     score += 50;
                     frightenedTimer = 40;
                     dotsCount--;
+                    Sound.powerPellet();
                 }
                 updateUI();
 
@@ -442,14 +510,18 @@
                 if (g.x === pacman.x && g.y === pacman.y) {
                     if (frightenedTimer > 0) {
                         score += 200;
+                        Sound.eatGhost();
                         g.x = 9 + Math.floor(Math.random() * 2);
                         g.y = 9 + Math.floor(Math.random() * 2);
                     } else {
                         lives--;
                         updateUI();
+                        Sound.lifeLost();
                         if (lives <= 0) {
+                            setTimeout(() => Sound.death(), 300);
                             gameOver();
                         } else {
+                            setTimeout(() => Sound.death(), 200);
                             resetPositions();
                         }
                         return;
