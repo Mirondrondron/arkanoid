@@ -251,9 +251,9 @@
 
         /* Баннер */
         .hero-banner {
-            background: linear-gradient(-45deg, #7c3aed, #ffcc00, #ef4444, #22c55e, #7c3aed, #0d0d0d, #7c3aed);
-            background-size: 400% 400%;
-            animation: rainbowShift 8s linear infinite;
+            background: conic-gradient(from 0deg, #7c3aed, #ffcc00, #ef4444, #22c55e, #0d0d0d, #7c3aed);
+            background-size: 200% 200%;
+            animation: rainbowRotate 6s linear infinite;
             border-radius: 20px;
             padding: 40px;
             margin-bottom: 32px;
@@ -266,9 +266,9 @@
             overflow: hidden;
         }
 
-        @keyframes rainbowShift {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 300% 50%; }
+        @keyframes rainbowRotate {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
         }
 
         .hero-banner::before {
