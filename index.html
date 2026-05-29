@@ -100,6 +100,120 @@
             color: #fff;
         }
 
+        /* Модальное окно достижений */
+        .ach-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .ach-modal.show {
+            display: flex;
+        }
+        .ach-modal-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 28px;
+        }
+        .ach-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .ach-modal-header h2 {
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ach-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .ach-close:hover {
+            color: #fff;
+        }
+        .ach-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .ach-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #111;
+            border: 1px solid #222;
+            transition: all 0.2s;
+        }
+        .ach-item.unlocked {
+            border-color: #ffcc00;
+            background: rgba(255,204,0,0.05);
+        }
+        .ach-item.locked {
+            opacity: 0.5;
+        }
+        .ach-icon {
+            font-size: 32px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: #1a1a1a;
+        }
+        .ach-item.unlocked .ach-icon {
+            background: rgba(255,204,0,0.15);
+        }
+        .ach-info {
+            flex: 1;
+        }
+        .ach-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+        .ach-desc {
+            font-size: 13px;
+            color: #888;
+        }
+        .ach-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .ach-item.unlocked .ach-badge {
+            background: #ffcc00;
+            color: #000;
+        }
+        .ach-item.locked .ach-badge {
+            background: #333;
+            color: #666;
+        }
+        .ach-progress {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #ffcc00;
+        }
+
         /* Основной контент */
         .main {
             max-width: 1200px;
@@ -395,6 +509,7 @@
             <a href="/" class="active">Игры</a>
             <a href="#new">Новинки</a>
             <a href="#top">Топ</a>
+            <a href="#" id="achievementsBtn">🏆 Достижения</a>
         </nav>
     </header>
 
@@ -610,6 +725,17 @@
         </div>
     </main>
 
+    <!-- Модальное окно достижений -->
+    <div class="ach-modal" id="achModal">
+        <div class="ach-modal-content">
+            <div class="ach-modal-header">
+                <h2>🏆 Достижения</h2>
+                <button class="ach-close" id="achClose">✕</button>
+            </div>
+            <div class="ach-list" id="achList"></div>
+        </div>
+    </div>
+
     <!-- Футер -->
     <footer class="footer">
         <p>GameHub — Играй бесплатно прямо в браузере!</p>
@@ -814,6 +940,42 @@
             if (arcadePlayed.length >= totalArcade && totalArcade > 0) unlockAchievement('arcade_master');
             if (puzzlePlayed.length >= totalPuzzle && totalPuzzle > 0) unlockAchievement('puzzle_solver');
         }, 100);
+
+        // ====== МОДАЛЬНОЕ ОКНО ДОСТИЖЕНИЙ ======
+        function renderAchievements() {
+            const list = document.getElementById('achList');
+            list.innerHTML = '';
+            ACHIEVEMENTS.forEach(ach => {
+                const unlocked = achievements[ach.id]?.unlocked;
+                const item = document.createElement('div');
+                item.className = `ach-item ${unlocked ? 'unlocked' : 'locked'}`;
+                item.innerHTML = `
+                    <div class="ach-icon">${ach.icon}</div>
+                    <div class="ach-info">
+                        <div class="ach-title">${ach.title}</div>
+                        <div class="ach-desc">${ach.desc}</div>
+                    </div>
+                    <div class="ach-badge">${unlocked ? 'Получено' : 'Заблокировано'}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        document.getElementById('achievementsBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            renderAchievements();
+            document.getElementById('achModal').classList.add('show');
+        });
+
+        document.getElementById('achClose').addEventListener('click', () => {
+            document.getElementById('achModal').classList.remove('show');
+        });
+
+        document.getElementById('achModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('achModal')) {
+                document.getElementById('achModal').classList.remove('show');
+            }
+        });
 
         // Toast animations CSS
         const toastStyle = document.createElement('style');
