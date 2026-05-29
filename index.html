@@ -156,16 +156,30 @@
             border-radius: 16px;
             overflow: hidden;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             text-decoration: none;
             color: #fff;
             border: 1px solid #2a2a2a;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: cardAppear 0.6s ease forwards;
+        }
+
+        @keyframes cardAppear {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .game-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(255, 204, 0, 0.15);
-            border-color: #444;
+            box-shadow: 0 12px 40px rgba(255, 204, 0, 0.2);
+            border-color: #555;
+        }
+
+        .game-card {
+            transform-style: preserve-3d;
+            perspective: 1000px;
         }
 
         .game-thumb {
@@ -238,6 +252,8 @@
         /* Баннер */
         .hero-banner {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 8s ease infinite;
             border-radius: 20px;
             padding: 40px;
             margin-bottom: 32px;
@@ -246,6 +262,23 @@
             justify-content: space-between;
             gap: 30px;
             border: 1px solid #2a2a2a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255,204,0,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 50%, rgba(0,212,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
         }
 
         .hero-content h1 {
@@ -261,6 +294,12 @@
 
         .hero-emoji {
             font-size: 100px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         /* Футер */
@@ -529,9 +568,46 @@
     </footer>
 
     <script>
+        // ====== АНИМАЦИИ ======
+        const gameCards = document.querySelectorAll('.game-card');
+
+        // Staggered появление карточек
+        gameCards.forEach((card, i) => {
+            card.style.animationDelay = (i * 0.08) + 's';
+        });
+
+        // 3D Tilt эффект при наведении
+        gameCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(1.02)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = '';
+            });
+        });
+
+        // Плавное появление при фильтре
+        function animateVisibleCards() {
+            let delay = 0;
+            gameCards.forEach(card => {
+                if (card.style.display !== 'none') {
+                    card.style.animation = 'none';
+                    card.offsetHeight; // trigger reflow
+                    card.style.animation = `cardAppear 0.4s ease ${delay * 0.05}s forwards`;
+                    delay++;
+                }
+            });
+        }
+
         // Поиск игр
         const searchInput = document.getElementById('searchInput');
-        const gameCards = document.querySelectorAll('.game-card');
 
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
@@ -543,6 +619,7 @@
                     card.style.display = 'none';
                 }
             });
+            animateVisibleCards();
         });
 
         // Фильтр по категориям
@@ -565,6 +642,7 @@
                         card.style.display = 'none';
                     }
                 });
+                animateVisibleCards();
             });
         });
     </script>
