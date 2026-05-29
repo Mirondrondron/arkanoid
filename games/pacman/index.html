@@ -284,7 +284,7 @@
         ];
 
         let grid = [];
-        let pacman = { x: 10, y: 15, dir: { x: 0, y: 0 }, nextDir: { x: 0, y: 0 }, mouth: 0 };
+        let pacman = { x: 10, y: 15, prevX: 10, prevY: 15, dir: { x: 0, y: 0 }, nextDir: { x: 0, y: 0 }, mouth: 0 };
         let ghosts = [];
         let score = 0;
         let lives = 3;
@@ -293,6 +293,8 @@
         let isRunning = false;
         let gameLoop = null;
         let frightenedTimer = 0;
+        let lastMoveTime = 0;
+        const MOVE_INTERVAL = 220;
 
         function initGame() {
             grid = MAP.map(row => [...row]);
@@ -302,23 +304,24 @@
                     if (grid[r][c] === 2 || grid[r][c] === 3) dotsCount++;
                 }
             }
-            pacman = { x: 10, y: 15, dir: { x: 0, y: 0 }, nextDir: { x: 0, y: 0 }, mouth: 0 };
+            pacman = { x: 10, y: 15, prevX: 10, prevY: 15, dir: { x: 0, y: 0 }, nextDir: { x: 0, y: 0 }, mouth: 0 };
             ghosts = [
-                { x: 9, y: 9, dir: { x: 0, y: -1 }, color: '#ff0000', name: 'blinky' },
-                { x: 10, y: 9, dir: { x: 0, y: -1 }, color: '#ffb8ff', name: 'pinky' },
-                { x: 9, y: 10, dir: { x: 1, y: 0 }, color: '#00ffff', name: 'inky' },
-                { x: 10, y: 10, dir: { x: -1, y: 0 }, color: '#ffb852', name: 'clyde' }
+                { x: 9, y: 9, prevX: 9, prevY: 9, dir: { x: 0, y: -1 }, color: '#ff0000', name: 'blinky' },
+                { x: 10, y: 9, prevX: 10, prevY: 9, dir: { x: 0, y: -1 }, color: '#ffb8ff', name: 'pinky' },
+                { x: 9, y: 10, prevX: 9, prevY: 10, dir: { x: 1, y: 0 }, color: '#00ffff', name: 'inky' },
+                { x: 10, y: 10, prevX: 10, prevY: 10, dir: { x: -1, y: 0 }, color: '#ffb852', name: 'clyde' }
             ];
             score = 0;
             lives = 3;
             level = 1;
             frightenedTimer = 0;
             isRunning = true;
+            lastMoveTime = 0;
             updateUI();
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
-            if (gameLoop) clearInterval(gameLoop);
-            gameLoop = setInterval(update, 200);
+            if (gameLoop) cancelAnimationFrame(gameLoop);
+            gameLoop = requestAnimationFrame(update);
         }
 
         function updateUI() {
@@ -333,6 +336,9 @@
         }
 
         function movePacman() {
+            pacman.prevX = pacman.x;
+            pacman.prevY = pacman.y;
+
             if (pacman.nextDir.x !== 0 || pacman.nextDir.y !== 0) {
                 if (!isWall(pacman.x + pacman.nextDir.x, pacman.y + pacman.nextDir.y)) {
                     pacman.dir = { ...pacman.nextDir };
@@ -341,9 +347,9 @@
             const nx = pacman.x + pacman.dir.x;
             const ny = pacman.y + pacman.dir.y;
 
-            // Туннели
-            if (nx < 0) { pacman.x = COLS - 1; return; }
-            if (nx >= COLS) { pacman.x = 0; return; }
+            // Туннели — без анимации телепорта
+            if (nx < 0) { pacman.prevX = pacman.x = COLS - 1; return; }
+            if (nx >= COLS) { pacman.prevX = pacman.x = 0; return; }
 
             if (!isWall(nx, ny)) {
                 pacman.x = nx;
@@ -370,6 +376,9 @@
 
         function moveGhosts() {
             ghosts.forEach(g => {
+                g.prevX = g.x;
+                g.prevY = g.y;
+
                 const dirs = [
                     { x: 0, y: -1 }, { x: 0, y: 1 },
                     { x: -1, y: 0 }, { x: 1, y: 0 }
@@ -384,14 +393,11 @@
                 if (dirs.length > 0) {
                     let bestDir;
                     if (frightenedTimer > 0) {
-                        // В frightened mode — убегают случайно
                         bestDir = dirs[Math.floor(Math.random() * dirs.length)];
                     } else {
-                        // Расстояние до Pac-Man
                         const distToPacman = Math.abs(g.x - pacman.x) + Math.abs(g.y - pacman.y);
                         
                         if (distToPacman <= 4) {
-                            // Близко — преследуют (но не идеально)
                             let bestDist = Infinity;
                             dirs.forEach(d => {
                                 const nx = g.x + d.x;
@@ -403,7 +409,6 @@
                                 }
                             });
                         } else if (distToPacman <= 8 && Math.random() < 0.4) {
-                            // Средняя дистанция — иногда преследуют
                             let bestDist = Infinity;
                             dirs.forEach(d => {
                                 const nx = g.x + d.x;
@@ -415,7 +420,6 @@
                                 }
                             });
                         } else {
-                            // Далеко — случайное блуждание
                             bestDir = dirs[Math.floor(Math.random() * dirs.length)];
                         }
                     }
@@ -424,8 +428,8 @@
 
                 const nx = g.x + g.dir.x;
                 const ny = g.y + g.dir.y;
-                if (nx < 0) g.x = COLS - 1;
-                else if (nx >= COLS) g.x = 0;
+                if (nx < 0) { g.prevX = g.x = COLS - 1; }
+                else if (nx >= COLS) { g.prevX = g.x = 0; }
                 else if (!isWall(nx, ny)) {
                     g.x = nx;
                     g.y = ny;
@@ -455,15 +459,15 @@
         }
 
         function resetPositions() {
-            pacman.x = 10;
-            pacman.y = 15;
+            pacman.x = pacman.prevX = 10;
+            pacman.y = pacman.prevY = 15;
             pacman.dir = { x: 0, y: 0 };
             pacman.nextDir = { x: 0, y: 0 };
             ghosts = [
-                { x: 9, y: 9, dir: { x: 0, y: -1 }, color: '#ff0000', name: 'blinky' },
-                { x: 10, y: 9, dir: { x: 0, y: -1 }, color: '#ffb8ff', name: 'pinky' },
-                { x: 9, y: 10, dir: { x: 1, y: 0 }, color: '#00ffff', name: 'inky' },
-                { x: 10, y: 10, dir: { x: -1, y: 0 }, color: '#ffb852', name: 'clyde' }
+                { x: 9, y: 9, prevX: 9, prevY: 9, dir: { x: 0, y: -1 }, color: '#ff0000', name: 'blinky' },
+                { x: 10, y: 9, prevX: 10, prevY: 9, dir: { x: 0, y: -1 }, color: '#ffb8ff', name: 'pinky' },
+                { x: 9, y: 10, prevX: 9, prevY: 10, dir: { x: 1, y: 0 }, color: '#00ffff', name: 'inky' },
+                { x: 10, y: 10, prevX: 10, prevY: 10, dir: { x: -1, y: 0 }, color: '#ffb852', name: 'clyde' }
             ];
             frightenedTimer = 0;
         }
@@ -483,7 +487,7 @@
 
         function gameOver() {
             isRunning = false;
-            clearInterval(gameLoop);
+            cancelAnimationFrame(gameLoop);
             document.getElementById('finalScore').textContent = score;
             document.getElementById('gameOverScreen').classList.remove('hidden');
         }
@@ -522,8 +526,9 @@
             }
 
             // Pac-Man
-            const px = pacman.x * TILE + TILE/2;
-            const py = pacman.y * TILE + TILE/2;
+            const progress = Math.min(1, (performance.now() - lastMoveTime) / MOVE_INTERVAL);
+            const px = (pacman.prevX + (pacman.x - pacman.prevX) * progress) * TILE + TILE/2;
+            const py = (pacman.prevY + (pacman.y - pacman.prevY) * progress) * TILE + TILE/2;
             const mouthOpen = Math.abs(Math.sin(pacman.mouth)) * 0.3;
             let startAngle = 0;
             if (pacman.dir.x === 1) startAngle = 0;
@@ -539,8 +544,8 @@
 
             // Призраки
             ghosts.forEach(g => {
-                const gx = g.x * TILE + TILE/2;
-                const gy = g.y * TILE + TILE/2;
+                const gx = (g.prevX + (g.x - g.prevX) * progress) * TILE + TILE/2;
+                const gy = (g.prevY + (g.y - g.prevY) * progress) * TILE + TILE/2;
                 const color = frightenedTimer > 0 ? '#2121ff' : g.color;
 
                 ctx.fillStyle = color;
@@ -566,21 +571,27 @@
                 ctx.fill();
             });
 
-            // Frightened timer
-            if (frightenedTimer > 0) {
-                frightenedTimer--;
-                if (frightenedTimer <= 0) {
-                    frightenedTimer = 0;
-                }
-            }
         }
 
-        function update() {
+        function update(time) {
             if (!isRunning) return;
-            movePacman();
-            moveGhosts();
-            checkCollisions();
+
+            if (lastMoveTime === 0) lastMoveTime = time;
+
+            // Логический ход
+            if (time - lastMoveTime >= MOVE_INTERVAL) {
+                movePacman();
+                moveGhosts();
+                checkCollisions();
+                if (frightenedTimer > 0) {
+                    frightenedTimer--;
+                    if (frightenedTimer <= 0) frightenedTimer = 0;
+                }
+                lastMoveTime = time;
+            }
+
             draw();
+            gameLoop = requestAnimationFrame(update);
         }
 
         // Управление
