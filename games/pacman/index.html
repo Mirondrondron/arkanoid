@@ -318,7 +318,7 @@
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
             if (gameLoop) clearInterval(gameLoop);
-            gameLoop = setInterval(update, 150);
+            gameLoop = setInterval(update, 200);
         }
 
         function updateUI() {
@@ -377,26 +377,47 @@
                     if (d.x === -g.dir.x && d.y === -g.dir.y) return false;
                     const nx = g.x + d.x;
                     const ny = g.y + d.y;
-                    if (nx < 0 || nx >= COLS) return true; // туннель
+                    if (nx < 0 || nx >= COLS) return true;
                     return !isWall(nx, ny);
                 });
 
                 if (dirs.length > 0) {
                     let bestDir;
                     if (frightenedTimer > 0) {
+                        // В frightened mode — убегают случайно
                         bestDir = dirs[Math.floor(Math.random() * dirs.length)];
                     } else {
-                        // Преследование: выбираем направление ближе к Pac-Man
-                        let bestDist = Infinity;
-                        dirs.forEach(d => {
-                            const nx = g.x + d.x;
-                            const ny = g.y + d.y;
-                            const dist = Math.abs(nx - pacman.x) + Math.abs(ny - pacman.y);
-                            if (dist < bestDist) {
-                                bestDist = dist;
-                                bestDir = d;
-                            }
-                        });
+                        // Расстояние до Pac-Man
+                        const distToPacman = Math.abs(g.x - pacman.x) + Math.abs(g.y - pacman.y);
+                        
+                        if (distToPacman <= 4) {
+                            // Близко — преследуют (но не идеально)
+                            let bestDist = Infinity;
+                            dirs.forEach(d => {
+                                const nx = g.x + d.x;
+                                const ny = g.y + d.y;
+                                const dist = Math.abs(nx - pacman.x) + Math.abs(ny - pacman.y);
+                                if (dist < bestDist) {
+                                    bestDist = dist;
+                                    bestDir = d;
+                                }
+                            });
+                        } else if (distToPacman <= 8 && Math.random() < 0.4) {
+                            // Средняя дистанция — иногда преследуют
+                            let bestDist = Infinity;
+                            dirs.forEach(d => {
+                                const nx = g.x + d.x;
+                                const ny = g.y + d.y;
+                                const dist = Math.abs(nx - pacman.x) + Math.abs(ny - pacman.y);
+                                if (dist < bestDist) {
+                                    bestDist = dist;
+                                    bestDir = d;
+                                }
+                            });
+                        } else {
+                            // Далеко — случайное блуждание
+                            bestDir = dirs[Math.floor(Math.random() * dirs.length)];
+                        }
                     }
                     g.dir = bestDir;
                 }
