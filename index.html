@@ -182,6 +182,45 @@
             perspective: 1000px;
         }
 
+        .fav-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .fav-btn:hover {
+            background: rgba(0,0,0,0.7);
+            transform: scale(1.15);
+        }
+
+        .fav-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 2;
+            transition: all 0.2s;
+        }
+
+        .fav-btn.active svg {
+            fill: #ffcc00;
+            stroke: #ffcc00;
+            filter: drop-shadow(0 0 6px rgba(255,204,0,0.6));
+        }
+
         .game-thumb {
             width: 100%;
             aspect-ratio: 4/3;
@@ -373,6 +412,7 @@
         <!-- Категории -->
         <div class="categories">
             <button class="category-btn active">Все</button>
+            <button class="category-btn">⭐ Избранное</button>
             <button class="category-btn">Аркады</button>
             <button class="category-btn">Экшен</button>
             <button class="category-btn">Головоломки</button>
@@ -386,6 +426,7 @@
         <div class="games-grid" id="gamesGrid">
             <a href="games/arkanoid/index.html" class="game-card" data-title="arkanoid арканоид" data-category="аркады">
                 <div class="game-thumb arkanoid">
+                    <button class="fav-btn" data-game="arkanoid"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🧱
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -403,6 +444,7 @@
 
             <a href="games/snake/index.html" class="game-card" data-title="snake змейка" data-category="аркады">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);">
+                    <button class="fav-btn" data-game="snake"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🐍
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -420,6 +462,7 @@
 
             <a href="games/tetris/index.html" class="game-card" data-title="tetris тетрис" data-category="головоломки">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%);">
+                    <button class="fav-btn" data-game="tetris"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🎯
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -437,6 +480,7 @@
 
             <a href="games/2048/index.html" class="game-card" data-title="2048" data-category="головоломки">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #e65100 0%, #f57c00 100%);">
+                    <button class="fav-btn" data-game="2048"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🔢
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -454,6 +498,7 @@
 
             <a href="games/pong/index.html" class="game-card" data-title="pong пинг-понг" data-category="аркады">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #1a237e 0%, #283593 100%);">
+                    <button class="fav-btn" data-game="pong"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🏓
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -471,6 +516,7 @@
 
             <a href="games/space-invaders/index.html" class="game-card" data-title="space invaders космические захватчики" data-category="аркады">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #1a0b2e 0%, #311b92 50%, #4a148c 100%);">
+                    <button class="fav-btn" data-game="space-invaders"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🚀
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -488,6 +534,7 @@
 
             <a href="games/racing/index.html" class="game-card" data-title="racing гонки" data-category="гонки">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #1b5e20 100%);">
+                    <button class="fav-btn" data-game="racing"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🏎️
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -505,6 +552,7 @@
 
             <a href="games/flappy/index.html" class="game-card" data-title="flappy bird птичка" data-category="аркады">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #4fc3f7 0%, #81d4fa 100%);">
+                    <button class="fav-btn" data-game="flappy"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🐦
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -526,6 +574,7 @@
         <div class="games-grid">
             <a href="games/flappy/index.html" class="game-card" data-title="flappy bird" data-category="аркады">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #4fc3f7 0%, #81d4fa 100%);">
+                    <button class="fav-btn" data-game="flappy"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     🐦
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -543,6 +592,7 @@
 
             <a href="games/pacman/index.html" class="game-card" data-title="pacman пакмен" data-category="аркады">
                 <div class="game-thumb" style="background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);">
+                    <button class="fav-btn" data-game="pacman"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
                     👾
                     <div class="play-overlay">
                         <div class="play-btn">▶</div>
@@ -621,6 +671,33 @@
             animateVisibleCards();
         });
 
+        // ====== ИЗБРАННОЕ ======
+        const FAV_KEY = 'gamehub_favorites';
+        let favorites = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+
+        function updateFavButtons() {
+            document.querySelectorAll('.fav-btn').forEach(btn => {
+                const game = btn.getAttribute('data-game');
+                btn.classList.toggle('active', favorites.includes(game));
+            });
+        }
+
+        document.querySelectorAll('.fav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const game = btn.getAttribute('data-game');
+                if (favorites.includes(game)) {
+                    favorites = favorites.filter(g => g !== game);
+                } else {
+                    favorites.push(game);
+                }
+                localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
+                updateFavButtons();
+            });
+        });
+        updateFavButtons();
+
         // Фильтр по категориям
         const categoryBtns = document.querySelectorAll('.category-btn');
         categoryBtns.forEach(btn => {
@@ -634,6 +711,12 @@
                         card.style.display = '';
                         return;
                     }
+                    if (category.includes('избранное')) {
+                        const href = card.getAttribute('href') || '';
+                        const game = href.replace('games/', '').replace('/index.html', '');
+                        card.style.display = favorites.includes(game) ? '' : 'none';
+                        return;
+                    }
                     const cardCategory = card.getAttribute('data-category') || '';
                     if (cardCategory.includes(category.slice(0, -1))) {
                         card.style.display = '';
@@ -644,6 +727,107 @@
                 animateVisibleCards();
             });
         });
+
+        // ====== ДОСТИЖЕНИЯ ======
+        const ACHIEVEMENTS = [
+            { id: 'first_game', title: 'Первый запуск', desc: 'Запусти любую игру', icon: '🎮' },
+            { id: 'collector', title: 'Коллекционер', desc: 'Запусти 5 разных игр', icon: '📚' },
+            { id: 'favorite_fan', title: 'Фанат', desc: 'Добавь 3 игры в избранное', icon: '⭐' },
+            { id: 'arcade_master', title: 'Аркадный мастер', desc: 'Сыграй во все аркады', icon: '🏆' },
+            { id: 'puzzle_solver', title: 'Головоломщик', desc: 'Сыграй во все головоломки', icon: '🧩' },
+            { id: 'night_owl', title: 'Сова', desc: 'Играй после полуночи', icon: '🌙' },
+        ];
+
+        const ACH_KEY = 'gamehub_achievements';
+        let achievements = JSON.parse(localStorage.getItem(ACH_KEY) || '{}');
+
+        function unlockAchievement(id) {
+            if (achievements[id]) return;
+            achievements[id] = { unlocked: true, date: new Date().toISOString() };
+            localStorage.setItem(ACH_KEY, JSON.stringify(achievements));
+            showAchievementToast(id);
+        }
+
+        function showAchievementToast(id) {
+            const ach = ACHIEVEMENTS.find(a => a.id === id);
+            if (!ach) return;
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                background: #1a1a1a;
+                border: 1px solid #ffcc00;
+                border-radius: 16px;
+                padding: 16px 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 1000;
+                box-shadow: 0 8px 30px rgba(255,204,0,0.2);
+                animation: toastSlide 0.5s ease;
+            `;
+            toast.innerHTML = `
+                <div style="font-size: 32px;">${ach.icon}</div>
+                <div>
+                    <div style="font-weight: 700; color: #ffcc00;">Достижение разблокировано!</div>
+                    <div style="font-size: 14px; color: #ccc;">${ach.title}</div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastSlideOut 0.5s ease forwards';
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
+
+        // Проверка достижений
+        let playedGames = JSON.parse(localStorage.getItem('gamehub_played') || '[]');
+        gameCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const href = card.getAttribute('href') || '';
+                const game = href.replace('games/', '').replace('/index.html', '');
+                if (!playedGames.includes(game)) {
+                    playedGames.push(game);
+                    localStorage.setItem('gamehub_played', JSON.stringify(playedGames));
+                }
+                unlockAchievement('first_game');
+                if (playedGames.length >= 5) unlockAchievement('collector');
+                if (favorites.length >= 3) unlockAchievement('favorite_fan');
+                const hour = new Date().getHours();
+                if (hour >= 0 && hour < 6) unlockAchievement('night_owl');
+            });
+        });
+
+        // Ачивки аркад/головоломок
+        setTimeout(() => {
+            const arcadePlayed = playedGames.filter(g => {
+                const card = document.querySelector(`[href="games/${g}/index.html"]`);
+                return card && (card.getAttribute('data-category') || '').includes('аркад');
+            });
+            const puzzlePlayed = playedGames.filter(g => {
+                const card = document.querySelector(`[href="games/${g}/index.html"]`);
+                return card && (card.getAttribute('data-category') || '').includes('головолом');
+            });
+            const totalArcade = document.querySelectorAll('[data-category*="аркад"]').length;
+            const totalPuzzle = document.querySelectorAll('[data-category*="головолом"]').length;
+            if (arcadePlayed.length >= totalArcade && totalArcade > 0) unlockAchievement('arcade_master');
+            if (puzzlePlayed.length >= totalPuzzle && totalPuzzle > 0) unlockAchievement('puzzle_solver');
+        }, 100);
+
+        // Toast animations CSS
+        const toastStyle = document.createElement('style');
+        toastStyle.textContent = `
+            @keyframes toastSlide {
+                from { transform: translateX(120%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes toastSlideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(120%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(toastStyle);
     </script>
 </body>
 </html>
