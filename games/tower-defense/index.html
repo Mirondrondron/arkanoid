@@ -179,7 +179,7 @@
             fast:  { hp: 60, speed: 2.6, reward: 15, color: '#ffcc00', radius: 8 },
             tank:  { hp: 300, speed: 0.9, reward: 25, color: '#888888', radius: 14 },
             boss:  { hp: 1200, speed: 1.15, reward: 100, color: '#ff00ff', radius: 20 },
-            ultra: { hp: 45, speed: 4.0, reward: 18, color: '#00ff88', radius: 7 }
+            ultra: { hp: 75, speed: 4.0, reward: 22, color: '#00ff88', radius: 7 }
         };
 
         let gameState = 'waiting';
@@ -268,7 +268,7 @@
                 [{type:'tank', count:15, interval:25},{type:'boss', count:2, interval:90}],
                 [{type:'basic', count:40, interval:7},{type:'fast', count:20, interval:7}],
                 [{type:'boss', count:4, interval:100}],
-                [{type:'ultra', count:20, interval:8},{type:'tank', count:10, interval:30}],
+                [{type:'fast', count:25, interval:8},{type:'tank', count:10, interval:30}],
                 // Waves 31-39 (very hard)
                 [{type:'basic', count:30, interval:8},{type:'fast', count:20, interval:7},{type:'tank', count:10, interval:25}],
                 [{type:'boss', count:3, interval:80},{type:'ultra', count:15, interval:10}],
