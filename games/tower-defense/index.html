@@ -173,10 +173,10 @@
         };
 
         const ENEMY_TYPES = {
-            basic: { hp: 50, speed: 1.2, reward: 10, color: '#ff4444', radius: 10 },
-            fast:  { hp: 35, speed: 2.2, reward: 15, color: '#ffcc00', radius: 8 },
-            tank:  { hp: 180, speed: 0.7, reward: 30, color: '#888888', radius: 14 },
-            boss:  { hp: 600, speed: 0.5, reward: 100, color: '#ff00ff', radius: 20 }
+            basic: { hp: 80, speed: 1.2, reward: 12, color: '#ff4444', radius: 10 },
+            fast:  { hp: 60, speed: 2.2, reward: 18, color: '#ffcc00', radius: 8 },
+            tank:  { hp: 300, speed: 0.7, reward: 35, color: '#888888', radius: 14 },
+            boss:  { hp: 1200, speed: 0.5, reward: 150, color: '#ff00ff', radius: 20 }
         };
 
         let gameState = 'waiting';
@@ -258,7 +258,7 @@
             ];
             return waves[(n-1) % waves.length].map(g => ({
                 ...g,
-                hpMul: 1 + Math.floor((n-1)/waves.length) * 0.4
+                hpMul: 1 + Math.floor((n-1)/waves.length) * 0.6
             }));
         }
 
