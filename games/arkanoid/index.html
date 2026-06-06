@@ -316,12 +316,12 @@
         let paddle = { ...paddleBase };
         
         const POWERUP_TYPES = [
-            { type: 'expand', color: '#00ff00', symbol: '↔', duration: 8000 },
-            { type: 'sticky', color: '#ff00ff', symbol: '◎', duration: 10000 },
-            { type: 'laser', color: '#ff3333', symbol: '↑', duration: 6000 },
-            { type: 'slow', color: '#00ffff', symbol: '⧖', duration: 5000 },
-            { type: 'life', color: '#ff8800', symbol: '♥', duration: 0 },
-            { type: 'multiball', color: '#ffd700', symbol: '●', duration: 0 }
+            { type: 'expand', color: '#00ff00', symbol: '↔', duration: 8000, weight: 18 },
+            { type: 'sticky', color: '#ff00ff', symbol: '◎', duration: 10000, weight: 12 },
+            { type: 'laser', color: '#ff3333', symbol: '↑', duration: 6000, weight: 18 },
+            { type: 'slow', color: '#00ffff', symbol: '⧖', duration: 5000, weight: 15 },
+            { type: 'life', color: '#ff8800', symbol: '♥', duration: 0, weight: 15 },
+            { type: 'multiball', color: '#ffd700', symbol: '●', duration: 0, weight: 22 }
         ];
         
         const brickColors = ['#ff0040', '#ff4000', '#ff8000', '#ffff00', '#80ff00', '#00ff80', '#00ffff', '#0080ff'];
@@ -481,9 +481,19 @@
         }
 
         // ===== БОНУСЫ =====
+        function weightedRandom(items) {
+            const total = items.reduce((sum, item) => sum + item.weight, 0);
+            let rnd = Math.random() * total;
+            for (const item of items) {
+                rnd -= item.weight;
+                if (rnd <= 0) return item;
+            }
+            return items[items.length - 1];
+        }
+
         function spawnPowerUp(x, y) {
-            if (Math.random() > 0.18) return; // 18% шанс
-            const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+            if (Math.random() > 0.28) return; // 28% шанс выпадения бонуса
+            const type = weightedRandom(POWERUP_TYPES);
             powerUps.push({
                 x, y, w: 24, h: 24,
                 type: type.type,
