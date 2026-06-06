@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Крестики-нолики — GameHub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #0d0d0d;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        .header {
+            width: 100%;
+            max-width: 500px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .back-btn {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: #2a2a2a; color: #fff; }
+        .game-title { font-size: 20px; font-weight: 700; }
+        .header-right { width: 80px; }
+
+        .score-panel {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            margin-bottom: 16px;
+            gap: 10px;
+        }
+        .score-box {
+            background: #1a1a1a;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            flex: 1;
+            text-align: center;
+        }
+        .score-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .score-value { font-size: 22px; font-weight: 700; }
+        .score-x { color: #ff5252; }
+        .score-o { color: #448aff; }
+        .score-draw { color: #aaa; }
+
+        .status {
+            font-size: 16px;
+            color: #ccc;
+            margin-bottom: 12px;
+            min-height: 24px;
+            text-align: center;
+        }
+        .status .turn-x { color: #ff5252; font-weight: 700; }
+        .status .turn-o { color: #448aff; font-weight: 700; }
+
+        .game-area {
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 120px);
+            grid-template-rows: repeat(3, 120px);
+            gap: 8px;
+            background: #2a2a2a;
+            padding: 8px;
+            border-radius: 16px;
+        }
+        .cell {
+            background: #1a1a1a;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .cell:hover:not(.taken) {
+            background: #222;
+            transform: scale(1.03);
+        }
+        .cell.taken { cursor: default; }
+        .cell.winning {
+            background: #2e7d32;
+            box-shadow: 0 0 20px rgba(46, 125, 50, 0.5);
+        }
+
+        .mark-x line, .mark-o circle {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: draw 0.35s ease forwards;
+        }
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .controls-hint {
+            margin-top: 12px;
+            color: #666;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.85);
+            border-radius: 16px;
+            z-index: 10;
+        }
+        .overlay.hidden { display: none; }
+        .overlay h2 { font-size: 28px; margin-bottom: 8px; }
+        .overlay p { color: #aaa; margin-bottom: 16px; font-size: 16px; }
+        .btn {
+            padding: 12px 28px;
+            border-radius: 12px;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 6px;
+            min-width: 180px;
+        }
+        .btn-primary { background: #ffcc00; color: #000; }
+        .btn-primary:hover { background: #e6b800; transform: scale(1.05); }
+        .btn-secondary { background: #2a2a2a; color: #fff; border: 1px solid #444; }
+        .btn-secondary:hover { background: #3a3a3a; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        .mode-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+            width: 100%;
+            max-width: 260px;
+        }
+
+        @media (max-width: 480px) {
+            .board {
+                grid-template-columns: repeat(3, 95px);
+                grid-template-rows: repeat(3, 95px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="../../index.html" class="back-btn">← Назад</a>
+        <div class="game-title">❌⭕ Крестики-нолики</div>
+        <div class="header-right"></div>
+    </div>
+
+    <div class="score-panel">
+        <div class="score-box">
+            <div class="score-label">Игрок X</div>
+            <div class="score-value score-x" id="scoreX">0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Ничьи</div>
+            <div class="score-value score-draw" id="scoreDraw">0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Игрок O</div>
+            <div class="score-value score-o" id="scoreO">0</div>
+        </div>
+    </div>
+
+    <div class="status" id="status">Выберите режим игры</div>
+
+    <div class="game-area">
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <div class="overlay" id="startScreen">
+            <h2>❌⭕ Крестики-нолики</h2>
+            <p>Выбери режим:</p>
+            <div class="mode-selector">
+                <button class="btn btn-primary" data-mode="pvp">👥 Два игрока</button>
+                <button class="btn btn-secondary" data-mode="easy">🤖 Против ИИ (легко)</button>
+                <button class="btn btn-secondary" data-mode="hard">🧠 Против ИИ (невозможно)</button>
+            </div>
+        </div>
+
+        <div class="overlay hidden" id="resultScreen">
+            <h2 id="resultTitle">Победа!</h2>
+            <p id="resultText">Крестики выиграли</p>
+            <div style="text-align:center;">
+                <button class="btn btn-primary" id="nextRoundBtn">Следующий раунд</button>
+                <button class="btn btn-secondary" id="menuBtn">В меню</button>
+            </div>
+        </div>
+    </div>
+
+    <p class="controls-hint">Клик / тап — ход</p>
+
+    <script>
+        const boardEl = document.getElementById('board');
+        const cells = Array.from(document.querySelectorAll('.cell'));
+        const statusEl = document.getElementById('status');
+        const startScreen = document.getElementById('startScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultText = document.getElementById('resultText');
+
+        let board = Array(9).fill(null);
+        let currentPlayer = 'X';
+        let gameMode = 'pvp'; // pvp, easy, hard
+        let gameActive = false;
+        let scores = { X: 0, O: 0, draw: 0 };
+        let aiThinking = false;
+
+        const winLines = [
+            [0,1,2], [3,4,5], [6,7,8],
+            [0,3,6], [1,4,7], [2,5,8],
+            [0,4,8], [2,4,6]
+        ];
+
+        function updateStatus() {
+            if (!gameActive) {
+                statusEl.textContent = 'Игра окончена';
+                return;
+            }
+            const name = gameMode !== 'pvp' && currentPlayer === 'O' ? 'ИИ думает...' : `Ходит ${currentPlayer}`;
+            const cls = currentPlayer === 'X' ? 'turn-x' : 'turn-o';
+            statusEl.innerHTML = `<span class="${cls}">${name}</span>`;
+        }
+
+        function updateScores() {
+            document.getElementById('scoreX').textContent = scores.X;
+            document.getElementById('scoreO').textContent = scores.O;
+            document.getElementById('scoreDraw').textContent = scores.draw;
+        }
+
+        function render() {
+            cells.forEach((cell, i) => {
+                cell.innerHTML = '';
+                cell.classList.remove('taken', 'winning');
+                if (board[i] === 'X') {
+                    cell.innerHTML = '<svg class="mark-x" width="60" height="60" viewBox="0 0 100 100"><line x1="20" y1="20" x2="80" y2="80" stroke="#ff5252" stroke-width="10" stroke-linecap="round"/><line x1="80" y1="20" x2="20" y2="80" stroke="#ff5252" stroke-width="10" stroke-linecap="round"/></svg>';
+                    cell.classList.add('taken');
+                } else if (board[i] === 'O') {
+                    cell.innerHTML = '<svg class="mark-o" width="60" height="60" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" stroke="#448aff" stroke-width="10" fill="none" stroke-linecap="round"/></svg>';
+                    cell.classList.add('taken');
+                }
+            });
+        }
+
+        function checkWinnerState(b = board) {
+            for (const [a, b1, c] of winLines) {
+                if (b[a] && b[a] === b[b1] && b[a] === b[c]) {
+                    return { winner: b[a], line: [a, b1, c] };
+                }
+            }
+            if (b.every(cell => cell !== null)) return { winner: 'draw', line: [] };
+            return null;
+        }
+
+        function highlightWin(line) {
+            line.forEach(i => cells[i].classList.add('winning'));
+        }
+
+        function endGame(result) {
+            gameActive = false;
+            if (result.winner === 'draw') {
+                scores.draw++;
+                resultTitle.textContent = '🤝 Ничья!';
+                resultText.textContent = 'Поле заполнено';
+            } else {
+                scores[result.winner]++;
+                resultTitle.textContent = `🏆 Победа ${result.winner}!`;
+                resultText.textContent = result.winner === 'X' ? 'Крестики выиграли' : 'Нолики выиграли';
+                highlightWin(result.line);
+            }
+            updateScores();
+            setTimeout(() => {
+                resultScreen.classList.remove('hidden');
+            }, 600);
+        }
+
+        function makeMove(index) {
+            if (!gameActive || board[index]) return false;
+            board[index] = currentPlayer;
+            render();
+            const result = checkWinnerState();
+            if (result) {
+                endGame(result);
+                return true;
+            }
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            updateStatus();
+            return true;
+        }
+
+        // Лёгкий ИИ
+        function getRandomMove(b) {
+            const empty = b.map((v, i) => v === null ? i : null).filter(v => v !== null);
+            return empty.length > 0 ? empty[Math.floor(Math.random() * empty.length)] : -1;
+        }
+
+        function getWinningMove(b, player) {
+            for (const i of b.map((v, i) => v === null ? i : null).filter(v => v !== null)) {
+                const copy = [...b];
+                copy[i] = player;
+                const res = checkWinnerState(copy);
+                if (res && res.winner === player) return i;
+            }
+            return -1;
+        }
+
+        function getEasyMove(b) {
+            const win = getWinningMove(b, 'O');
+            if (win !== -1) return win;
+            const block = getWinningMove(b, 'X');
+            if (block !== -1 && Math.random() > 0.3) return block;
+            return getRandomMove(b);
+        }
+
+        // Минимакс (невозможный ИИ)
+        function minimax(b, depth, isMax) {
+            const res = checkWinnerState(b);
+            if (res) {
+                if (res.winner === 'O') return 10 - depth;
+                if (res.winner === 'X') return depth - 10;
+                return 0;
+            }
+            if (isMax) {
+                let best = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (b[i] === null) {
+                        b[i] = 'O';
+                        best = Math.max(best, minimax(b, depth + 1, false));
+                        b[i] = null;
+                    }
+                }
+                return best;
+            } else {
+                let best = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (b[i] === null) {
+                        b[i] = 'X';
+                        best = Math.min(best, minimax(b, depth + 1, true));
+                        b[i] = null;
+                    }
+                }
+                return best;
+            }
+        }
+
+        function getHardMove(b) {
+            let bestVal = -Infinity;
+            let move = -1;
+            for (let i = 0; i < 9; i++) {
+                if (b[i] === null) {
+                    b[i] = 'O';
+                    const val = minimax(b, 0, false);
+                    b[i] = null;
+                    if (val > bestVal) {
+                        bestVal = val;
+                        move = i;
+                    }
+                }
+            }
+            return move;
+        }
+
+        function aiMove() {
+            if (!gameActive || currentPlayer !== 'O') return;
+            aiThinking = true;
+            updateStatus();
+            setTimeout(() => {
+                const move = gameMode === 'hard' ? getHardMove(board) : getEasyMove(board);
+                if (move !== -1) {
+                    makeMove(move);
+                }
+                aiThinking = false;
+            }, 400);
+        }
+
+        function startGame(mode) {
+            gameMode = mode;
+            board.fill(null);
+            currentPlayer = 'X';
+            gameActive = true;
+            aiThinking = false;
+            render();
+            updateStatus();
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            cells.forEach(c => c.classList.remove('winning'));
+        }
+
+        function resetScores() {
+            scores = { X: 0, O: 0, draw: 0 };
+            updateScores();
+        }
+
+        // События
+        cells.forEach(cell => {
+            cell.addEventListener('click', () => {
+                if (aiThinking) return;
+                const idx = parseInt(cell.dataset.index);
+                if (makeMove(idx)) {
+                    if (gameMode !== 'pvp' && gameActive && currentPlayer === 'O') {
+                        aiMove();
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-mode]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                resetScores();
+                startGame(btn.dataset.mode);
+            });
+        });
+
+        document.getElementById('nextRoundBtn').addEventListener('click', () => {
+            startGame(gameMode);
+        });
+
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            resultScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            board.fill(null);
+            render();
+            statusEl.textContent = 'Выберите режим игры';
+        });
+
+        render();
+    </script>
+</body>
+</html>

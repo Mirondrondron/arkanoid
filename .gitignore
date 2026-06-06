@@ -1,0 +1,16 @@
+# Binaries & archives
+cloudflared
+cloudflared.deb
+gh.zip
+gh_2.50.0_macOS_amd64/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log

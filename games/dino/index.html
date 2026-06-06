@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Dino Run — GameHub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #0d0d0d;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        .header {
+            width: 100%;
+            max-width: 900px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .back-btn {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: #2a2a2a; color: #fff; }
+        .game-title { font-size: 20px; font-weight: 700; }
+        .header-right { width: 80px; }
+        .game-area { position: relative; margin: 10px 0; }
+        canvas {
+            display: block;
+            border-radius: 16px;
+            border: 2px solid #2a2a2a;
+            max-width: 95vw;
+            max-height: 65vh;
+            background: #f7f7f7;
+        }
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.72);
+            border-radius: 16px;
+            z-index: 10;
+        }
+        .overlay.hidden { display: none; }
+        .overlay h2 { font-size: 32px; margin-bottom: 8px; }
+        .overlay p { color: #aaa; margin-bottom: 8px; font-size: 16px; }
+        .overlay .score-big { font-size: 48px; font-weight: 800; color: #ffcc00; margin: 4px 0 16px; }
+        .btn {
+            padding: 12px 32px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 4px;
+        }
+        .btn-primary { background: #ffcc00; color: #000; }
+        .btn-primary:hover { background: #e6b800; transform: scale(1.05); }
+        .btn-secondary { background: #2a2a2a; color: #fff; }
+        .btn-secondary:hover { background: #3a3a3a; }
+        .score-panel {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .score-box {
+            background: #1a1a1a;
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            flex: 1;
+            text-align: center;
+        }
+        .score-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .score-value { font-size: 22px; font-weight: 700; color: #ffcc00; }
+        .controls-hint { margin-top: 8px; color: #666; font-size: 13px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="../../index.html" class="back-btn">← Назад</a>
+        <div class="game-title">🦖 Dino Run</div>
+        <div class="header-right"></div>
+    </div>
+
+    <div class="score-panel">
+        <div class="score-box">
+            <div class="score-label">Счёт</div>
+            <div class="score-value" id="score">0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Рекорд</div>
+            <div class="score-value" id="highScore">0</div>
+        </div>
+    </div>
+
+    <div class="game-area">
+        <canvas id="game" width="800" height="400"></canvas>
+
+        <div class="overlay" id="startScreen">
+            <h2>🦖 Dino Run</h2>
+            <p>Пробел / ↑ — прыжок, ↓ — присесть</p>
+            <p>Уклоняйся от кактусов и птеродактилей!</p>
+            <button class="btn btn-primary" id="startBtn">Играть</button>
+        </div>
+
+        <div class="overlay hidden" id="gameOverScreen">
+            <h2>💥 О нет!</h2>
+            <p>Счёт:</p>
+            <div class="score-big" id="finalScore">0</div>
+            <div>
+                <button class="btn btn-primary" id="restartBtn">Ещё раз</button>
+                <a href="../../index.html" class="btn btn-secondary" style="display:inline-block;text-decoration:none;">Меню</a>
+            </div>
+        </div>
+    </div>
+
+    <p class="controls-hint">Пробел / ↑ — прыжок • ↓ — присесть • Клик / тап — прыжок</p>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+
+        // Параметры
+        const GRAVITY = 0.6;
+        const JUMP_FORCE = -11;
+        const GROUND_Y = 340;
+        const GAME_SPEED_BASE = 5;
+        const SPAWN_RATE_BASE = 100;
+
+        // Аудио
+        let audioCtx = null;
+        function initAudio() {
+            if (audioCtx) return;
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+        }
+        function playJumpSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(450, audioCtx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+        }
+        function playScoreSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+        function playHitSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        // Состояние
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('dinoHighScore') || '0');
+        let isRunning = false;
+        let animationId = null;
+        let frameCount = 0;
+        let gameSpeed = GAME_SPEED_BASE;
+
+        let dino = {
+            x: 80,
+            y: GROUND_Y,
+            width: 40,
+            height: 50,
+            vy: 0,
+            isJumping: false,
+            isDucking: false,
+            duckHeight: 28,
+            runFrame: 0,
+            legFrame: 0
+        };
+
+        let obstacles = [];
+        let clouds = [];
+        let stars = [];
+        let groundOffset = 0;
+
+        // DOM
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const finalScoreEl = document.getElementById('finalScore');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+
+        highScoreEl.textContent = highScore;
+
+        function initClouds() {
+            clouds = [];
+            for (let i = 0; i < 6; i++) {
+                clouds.push({
+                    x: Math.random() * canvas.width,
+                    y: 30 + Math.random() * 100,
+                    w: 50 + Math.random() * 60,
+                    speed: 0.3 + Math.random() * 0.4
+                });
+            }
+        }
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 40; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * 180,
+                    size: Math.random() * 1.5 + 0.5,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function resetGame() {
+            dino = {
+                x: 80,
+                y: GROUND_Y,
+                width: 40,
+                height: 50,
+                vy: 0,
+                isJumping: false,
+                isDucking: false,
+                duckHeight: 28,
+                runFrame: 0,
+                legFrame: 0
+            };
+            obstacles = [];
+            score = 0;
+            frameCount = 0;
+            gameSpeed = GAME_SPEED_BASE;
+            groundOffset = 0;
+            scoreEl.textContent = '0';
+            initClouds();
+            initStars();
+            isRunning = true;
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            if (animationId) cancelAnimationFrame(animationId);
+            gameLoop();
+        }
+
+        function jump() {
+            if (!isRunning) return;
+            if (!dino.isJumping) {
+                dino.vy = JUMP_FORCE;
+                dino.isJumping = true;
+                playJumpSound();
+            }
+        }
+
+        function duck(start) {
+            if (!isRunning) return;
+            dino.isDucking = start;
+        }
+
+        function spawnObstacle() {
+            const type = Math.random() < 0.6 ? 'cactus' : 'ptero';
+            if (type === 'cactus') {
+                const variant = Math.floor(Math.random() * 3);
+                let w = 20, h = 40;
+                if (variant === 1) { w = 35; h = 50; }
+                if (variant === 2) { w = 50; h = 40; }
+                obstacles.push({
+                    type: 'cactus',
+                    x: canvas.width + 20,
+                    y: GROUND_Y,
+                    width: w,
+                    height: h,
+                    passed: false
+                });
+            } else {
+                const heights = [GROUND_Y - 40, GROUND_Y - 80, GROUND_Y - 115];
+                const h = heights[Math.floor(Math.random() * heights.length)];
+                obstacles.push({
+                    type: 'ptero',
+                    x: canvas.width + 20,
+                    y: h,
+                    width: 44,
+                    height: 30,
+                    wing: 0,
+                    passed: false
+                });
+            }
+        }
+
+        function update() {
+            if (!isRunning) return;
+            frameCount++;
+            gameSpeed = GAME_SPEED_BASE + Math.min(score * 0.15, 7);
+            groundOffset -= gameSpeed;
+            if (groundOffset <= -20) groundOffset += 20;
+
+            // Облака
+            clouds.forEach(c => {
+                c.x -= c.speed + gameSpeed * 0.1;
+                if (c.x + c.w < 0) {
+                    c.x = canvas.width + 20 + Math.random() * 100;
+                    c.y = 30 + Math.random() * 100;
+                }
+            });
+
+            // Динозаврик
+            if (dino.isJumping) {
+                dino.vy += GRAVITY;
+                dino.y += dino.vy;
+                if (dino.y >= GROUND_Y) {
+                    dino.y = GROUND_Y;
+                    dino.vy = 0;
+                    dino.isJumping = false;
+                }
+            }
+            dino.legFrame += 0.15;
+            dino.runFrame += 0.1;
+
+            // Спавн препятствий — расстояние зависит от скорости,
+            // чтобы всегда можно было приземлиться и прыгнуть снова
+            const lastObs = obstacles[obstacles.length - 1];
+            const airTime = 42; // примерное время прыжка в кадрах
+            const minGap = gameSpeed * airTime + 120 + Math.random() * 80; // 120-200px запас
+            if (!lastObs || (canvas.width + 20 - (lastObs.x + lastObs.width) >= minGap)) {
+                spawnObstacle();
+            }
+
+            // Обновление препятствий
+            obstacles.forEach(obs => {
+                obs.x -= gameSpeed;
+                if (obs.type === 'ptero') {
+                    obs.wing += 0.12;
+                }
+                if (!obs.passed && obs.x + obs.width < dino.x) {
+                    obs.passed = true;
+                    score++;
+                    scoreEl.textContent = score;
+                    playScoreSound();
+                }
+            });
+            obstacles = obstacles.filter(obs => obs.x + obs.width > -50);
+
+            // Коллизии
+            const dinoW = dino.width;
+            const dinoH = dino.isDucking ? dino.duckHeight : dino.height;
+            const dinoX = dino.x - dinoW / 2;
+            const dinoY = dino.y - dinoH;
+            // Небольшие уменьшения хитбокса для честности
+            const padding = 4;
+
+            for (const obs of obstacles) {
+                let ox = obs.x + 3;
+                let oy = obs.y - obs.height + 3;
+                let ow = obs.width - 6;
+                let oh = obs.height - 6;
+                if (obs.type === 'ptero') {
+                    ox = obs.x + 4;
+                    oy = obs.y + 4;
+                    ow = obs.width - 8;
+                    oh = obs.height - 8;
+                }
+
+                if (
+                    dinoX + padding < ox + ow &&
+                    dinoX + dinoW - padding > ox &&
+                    dinoY + padding < oy + oh &&
+                    dinoY + dinoH - padding > oy
+                ) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+
+        function drawDino() {
+            const x = dino.x;
+            const y = dino.y;
+            const w = dino.width;
+            const h = dino.isDucking ? dino.duckHeight : dino.height;
+            const baseY = y;
+
+            ctx.save();
+            ctx.translate(x, baseY);
+
+            // Цвета
+            const body = '#555';
+            const dark = '#333';
+            const light = '#777';
+
+            if (dino.isDucking) {
+                // Присевший дино
+                ctx.fillStyle = body;
+                ctx.fillRect(-w / 2 + 5, -h + 5, w + 10, h - 5);
+                ctx.fillStyle = dark;
+                ctx.fillRect(-w / 2 + 5, -h + 5, w + 10, 4);
+                // Глаз
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(w / 2 + 2, -h + 10, 4, 4);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(w / 2 + 4, -h + 11, 2, 2);
+                // Ноги
+                const legOffset = Math.sin(dino.legFrame * 3) * 4;
+                ctx.fillStyle = dark;
+                ctx.fillRect(-w / 2 + 8, -3, 8, 6 + legOffset);
+                ctx.fillRect(w / 2 - 2, -3, 8, 6 - legOffset);
+            } else {
+                // Стоящий дино
+                // Тело
+                ctx.fillStyle = body;
+                ctx.fillRect(-w / 2 + 5, -h + 5, w - 5, h - 10);
+                // Голова
+                ctx.fillRect(w / 2 - 10, -h, 22, 18);
+                // Хвост
+                ctx.fillStyle = dark;
+                ctx.beginPath();
+                ctx.moveTo(-w / 2 + 5, -h + 15);
+                ctx.lineTo(-w / 2 - 10, -h + 22);
+                ctx.lineTo(-w / 2 + 5, -h + 25);
+                ctx.fill();
+                // Глаз
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(w / 2 - 2, -h + 3, 6, 6);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(w / 2, -h + 5, 3, 3);
+                // Рот
+                ctx.fillStyle = '#222';
+                ctx.fillRect(w / 2 + 4, -h + 10, 10, 3);
+                // Ноги
+                const legOffset = dino.isJumping ? 0 : Math.sin(dino.legFrame * 3) * 6;
+                ctx.fillStyle = dark;
+                ctx.fillRect(-w / 2 + 10, -5, 8, 8 + legOffset);
+                ctx.fillRect(w / 2 - 8, -5, 8, 8 - legOffset);
+            }
+            ctx.restore();
+        }
+
+        function drawCactus(obs) {
+            const x = obs.x;
+            const y = obs.y;
+            const w = obs.width;
+            const h = obs.height;
+            ctx.fillStyle = '#2e7d32';
+            // Основной ствол
+            ctx.fillRect(x, y - h, w * 0.35, h);
+            // Ответвления
+            if (w > 25) {
+                ctx.fillRect(x + w * 0.25, y - h * 0.6, w * 0.35, 8);
+                ctx.fillRect(x + w * 0.25, y - h * 0.6, 8, h * 0.35);
+            }
+            if (w > 40) {
+                ctx.fillRect(x - w * 0.15, y - h * 0.45, w * 0.3, 8);
+                ctx.fillRect(x - w * 0.15, y - h * 0.45, 8, h * 0.3);
+            }
+            ctx.fillStyle = '#1b5e20';
+            ctx.fillRect(x, y - h, w * 0.35, 4);
+        }
+
+        function drawPtero(obs) {
+            const x = obs.x;
+            const y = obs.y;
+            const wingY = Math.sin(obs.wing) * 8;
+            ctx.fillStyle = '#bf360c';
+            // Тело
+            ctx.fillRect(x + 10, y + 8, 24, 12);
+            // Голова
+            ctx.fillRect(x + 30, y + 2, 12, 10);
+            // Клюв
+            ctx.fillStyle = '#ff6f00';
+            ctx.beginPath();
+            ctx.moveTo(x + 40, y + 6);
+            ctx.lineTo(x + 52, y + 9);
+            ctx.lineTo(x + 40, y + 10);
+            ctx.fill();
+            // Глаз
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x + 34, y + 4, 4, 4);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(x + 35, y + 5, 2, 2);
+            // Крылья
+            ctx.fillStyle = '#bf360c';
+            ctx.beginPath();
+            ctx.moveTo(x + 14, y + 10);
+            ctx.lineTo(x - 4, y + 6 + wingY);
+            ctx.lineTo(x + 10, y + 14);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(x + 22, y + 10);
+            ctx.lineTo(x + 8, y + 4 - wingY);
+            ctx.lineTo(x + 18, y + 14);
+            ctx.fill();
+        }
+
+        function draw() {
+            // Фон
+            const timePhase = Math.floor(score / 10) % 3;
+            let skyTop = '#87CEEB', skyBot = '#E0F7FA', ground = '#e0e0e0', groundLine = '#bdbdbd';
+            if (timePhase === 1) { // закат
+                skyTop = '#ff7043'; skyBot = '#ffca28'; ground = '#d7ccc8'; groundLine = '#a1887f';
+            } else if (timePhase === 2) { // ночь
+                skyTop = '#0d1b2a'; skyBot = '#1b263b'; ground = '#263238'; groundLine = '#37474f';
+            }
+
+            const grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+            grad.addColorStop(0, skyTop);
+            grad.addColorStop(1, skyBot);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, GROUND_Y);
+
+            // Звёзды ночью
+            if (timePhase === 2) {
+                stars.forEach(s => {
+                    const tw = Math.sin(Date.now() * 0.003 + s.twinkle) * 0.5 + 0.5;
+                    ctx.fillStyle = `rgba(255,255,255,${tw * 0.8})`;
+                    ctx.fillRect(s.x, s.y, s.size, s.size);
+                });
+            }
+
+            // Облака
+            ctx.fillStyle = timePhase === 2 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)';
+            clouds.forEach(c => {
+                ctx.beginPath();
+                ctx.ellipse(c.x, c.y, c.w / 2, c.w / 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(c.x + c.w * 0.25, c.y - c.w * 0.1, c.w * 0.35, c.w * 0.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Горы на заднем плане
+            ctx.fillStyle = timePhase === 2 ? '#0a1520' : timePhase === 1 ? '#5d4037' : '#4caf50';
+            ctx.globalAlpha = 0.25;
+            ctx.beginPath();
+            ctx.moveTo(0, GROUND_Y);
+            for (let i = 0; i <= canvas.width; i += 30) {
+                ctx.lineTo(i, GROUND_Y - 25 - Math.sin(i * 0.015 + groundOffset * 0.005) * 18);
+            }
+            ctx.lineTo(canvas.width, GROUND_Y);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // Земля
+            ctx.fillStyle = ground;
+            ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+            ctx.fillStyle = groundLine;
+            ctx.fillRect(0, GROUND_Y, canvas.width, 3);
+            // Точки на земле
+            ctx.fillStyle = timePhase === 2 ? '#37474f' : '#bdbdbd';
+            for (let i = groundOffset % 20; i < canvas.width; i += 20) {
+                ctx.fillRect(i, GROUND_Y + 10, 3, 2);
+                ctx.fillRect(i + 10, GROUND_Y + 22, 4, 2);
+                ctx.fillRect(i + 5, GROUND_Y + 34, 2, 2);
+            }
+
+            // Препятствия
+            obstacles.forEach(obs => {
+                if (obs.type === 'cactus') drawCactus(obs);
+                else drawPtero(obs);
+            });
+
+            // Динозаврик
+            drawDino();
+        }
+
+        function gameLoop() {
+            if (!isRunning) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            isRunning = false;
+            cancelAnimationFrame(animationId);
+            playHitSound();
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('dinoHighScore', highScore);
+                highScoreEl.textContent = highScore;
+            }
+            finalScoreEl.textContent = score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // Управление
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isRunning && !gameOverScreen.classList.contains('hidden')) resetGame();
+                else if (!isRunning && !startScreen.classList.contains('hidden')) { initAudio(); resetGame(); }
+                else jump();
+            }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (isRunning) duck(true);
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown') {
+                duck(false);
+            }
+        });
+        canvas.addEventListener('mousedown', () => {
+            if (!isRunning && !gameOverScreen.classList.contains('hidden')) resetGame();
+            else if (!isRunning && !startScreen.classList.contains('hidden')) { initAudio(); resetGame(); }
+            else jump();
+        });
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!isRunning && !gameOverScreen.classList.contains('hidden')) resetGame();
+            else if (!isRunning && !startScreen.classList.contains('hidden')) { initAudio(); resetGame(); }
+            else jump();
+        }, { passive: false });
+
+        document.getElementById('startBtn').addEventListener('click', () => { initAudio(); resetGame(); });
+        document.getElementById('restartBtn').addEventListener('click', () => { initAudio(); resetGame(); });
+
+        initClouds();
+        initStars();
+        draw();
+    </script>
+</body>
+</html>

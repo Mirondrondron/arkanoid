@@ -5,6 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Игры — Играй бесплатно!</title>
     <style>
+        :root {
+            --bg: #0d0d0d;
+            --header-bg: #161616;
+            --card-bg: #1a1a1a;
+            --surface: #111;
+            --border: #2a2a2a;
+            --text: #fff;
+            --text-secondary: #ccc;
+            --text-muted: #888;
+            --text-dim: #555;
+            --hover-bg: #2a2a2a;
+            --input-bg: #2a2a2a;
+            --input-focus: #333;
+            --overlay-bg: rgba(0,0,0,0.85);
+            --shadow: rgba(255, 204, 0, 0.2);
+        }
+        [data-theme="light"] {
+            --bg: #f0f0f5;
+            --header-bg: #ffffff;
+            --card-bg: #ffffff;
+            --surface: #f5f5f5;
+            --border: #e0e0e0;
+            --text: #111111;
+            --text-secondary: #333333;
+            --text-muted: #666666;
+            --text-dim: #999999;
+            --hover-bg: #eeeeee;
+            --input-bg: #eeeeee;
+            --input-focus: #e0e0e0;
+            --overlay-bg: rgba(0,0,0,0.4);
+            --shadow: rgba(0, 0, 0, 0.15);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,15 +46,16 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            background: #0d0d0d;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
         }
 
         /* Шапка */
         .header {
-            background: #161616;
-            border-bottom: 1px solid #2a2a2a;
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--border);
             padding: 12px 24px;
             display: flex;
             align-items: center;
@@ -29,6 +63,7 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            transition: background 0.3s, border-color 0.3s;
         }
 
         .logo {
@@ -56,19 +91,19 @@
             padding: 10px 16px 10px 40px;
             border-radius: 12px;
             border: none;
-            background: #2a2a2a;
-            color: #fff;
+            background: var(--input-bg);
+            color: var(--text);
             font-size: 15px;
             outline: none;
-            transition: background 0.2s;
+            transition: background 0.2s, color 0.3s;
         }
 
         .search-box input::placeholder {
-            color: #888;
+            color: var(--text-muted);
         }
 
         .search-box input:focus {
-            background: #333;
+            background: var(--input-focus);
         }
 
         .search-box::before {
@@ -86,7 +121,7 @@
         }
 
         .nav-links a {
-            color: #ccc;
+            color: var(--text-secondary);
             text-decoration: none;
             padding: 8px 16px;
             border-radius: 10px;
@@ -96,15 +131,15 @@
         }
 
         .nav-links a:hover, .nav-links a.active {
-            background: #2a2a2a;
-            color: #fff;
+            background: var(--hover-bg);
+            color: var(--text);
         }
 
         /* Модальное окно достижений */
         .ach-modal {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.85);
+            background: var(--overlay-bg);
             display: none;
             align-items: center;
             justify-content: center;
@@ -115,14 +150,15 @@
             display: flex;
         }
         .ach-modal-content {
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
             border-radius: 20px;
             max-width: 500px;
             width: 100%;
             max-height: 80vh;
             overflow-y: auto;
             padding: 28px;
+            transition: background 0.3s, border-color 0.3s;
         }
         .ach-modal-header {
             display: flex;
@@ -158,8 +194,8 @@
             gap: 14px;
             padding: 14px 16px;
             border-radius: 14px;
-            background: #111;
-            border: 1px solid #222;
+            background: var(--surface);
+            border: 1px solid var(--border);
             transition: all 0.2s;
         }
         .ach-item.unlocked {
@@ -177,7 +213,7 @@
             align-items: center;
             justify-content: center;
             border-radius: 12px;
-            background: #1a1a1a;
+            background: var(--card-bg);
         }
         .ach-item.unlocked .ach-icon {
             background: rgba(255,204,0,0.15);
@@ -192,7 +228,7 @@
         }
         .ach-desc {
             font-size: 13px;
-            color: #888;
+            color: var(--text-muted);
         }
         .ach-badge {
             font-size: 11px;
@@ -232,9 +268,9 @@
         .category-btn {
             padding: 8px 18px;
             border-radius: 20px;
-            border: 1px solid #333;
+            border: 1px solid var(--border);
             background: transparent;
-            color: #aaa;
+            color: var(--text-muted);
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
@@ -266,14 +302,14 @@
         }
 
         .game-card {
-            background: #1a1a1a;
+            background: var(--card-bg);
             border-radius: 16px;
             overflow: hidden;
             cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s;
             text-decoration: none;
-            color: #fff;
-            border: 1px solid #2a2a2a;
+            color: var(--text);
+            border: 1px solid var(--border);
             opacity: 0;
             transform: translateY(30px);
             animation: cardAppear 0.6s ease forwards;
@@ -287,8 +323,8 @@
         }
 
         .game-card:hover {
-            box-shadow: 0 12px 40px rgba(255, 204, 0, 0.2);
-            border-color: #555;
+            box-shadow: 0 12px 40px var(--shadow);
+            border-color: var(--text-muted);
         }
 
         .game-card {
@@ -395,7 +431,7 @@
             align-items: center;
             gap: 8px;
             font-size: 12px;
-            color: #888;
+            color: var(--text-muted);
         }
 
         .game-rating {
@@ -404,7 +440,7 @@
 
         /* Баннер */
         .hero-banner {
-            background: conic-gradient(from 0deg, #7c3aed, #ffcc00, #ef4444, #22c55e, #0d0d0d, #7c3aed);
+            background: conic-gradient(from 0deg, #7c3aed, #ffcc00, #ef4444, #22c55e, var(--bg), #7c3aed);
             background-size: 200% 200%;
             animation: rainbowRotate 6s linear infinite;
             border-radius: 20px;
@@ -414,7 +450,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 30px;
-            border: 1px solid #2a2a2a;
+            border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
         }
@@ -439,7 +475,7 @@
         }
 
         .hero-content p {
-            color: #aaa;
+            color: var(--text-secondary);
             font-size: 16px;
             max-width: 400px;
         }
@@ -458,9 +494,9 @@
         .footer {
             text-align: center;
             padding: 40px 24px;
-            color: #555;
+            color: var(--text-dim);
             font-size: 13px;
-            border-top: 1px solid #1a1a1a;
+            border-top: 1px solid var(--border);
             margin-top: 40px;
         }
 
@@ -468,7 +504,15 @@
         @media (max-width: 768px) {
             .header {
                 flex-wrap: wrap;
-                padding: 10px 16px;
+                gap: 8px;
+                padding: 10px 12px;
+            }
+            .nav-links a {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+            .logo {
+                font-size: 20px;
             }
 
             .search-box {
@@ -509,7 +553,9 @@
             <a href="/" class="active">Игры</a>
             <a href="#new">Новинки</a>
             <a href="#top">Топ</a>
+            <a href="#" id="profileBtn">👤 Профиль</a>
             <a href="#" id="achievementsBtn">🏆 Достижения</a>
+            <button id="themeToggle" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:8px 10px;border-radius:10px;transition:background 0.2s;">🌙</button>
         </nav>
     </header>
 
@@ -682,6 +728,42 @@
                     </div>
                 </div>
             </a>
+
+            <a href="games/dino/index.html" class="game-card" data-title="dino run динозаврик" data-category="аркады">
+                <div class="game-thumb" style="background: linear-gradient(135deg, #33691e 0%, #558b2f 100%);">
+                    <button class="fav-btn" data-game="dino"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
+                    🦖
+                    <div class="play-overlay">
+                        <div class="play-btn">▶</div>
+                    </div>
+                </div>
+                <div class="game-info">
+                    <div class="game-title">Dino Run</div>
+                    <div class="game-meta">
+                        <span class="game-rating">★ 4.7</span>
+                        <span>•</span>
+                        <span>Аркада</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="games/tictactoe/index.html" class="game-card" data-title="крестики нолики tic tac toe" data-category="настольные">
+                <div class="game-thumb" style="background: linear-gradient(135deg, #311b92 0%, #7c4dff 100%);">
+                    <button class="fav-btn" data-game="tictactoe"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
+                    ❌⭕
+                    <div class="play-overlay">
+                        <div class="play-btn">▶</div>
+                    </div>
+                </div>
+                <div class="game-info">
+                    <div class="game-title">Крестики-нолики</div>
+                    <div class="game-meta">
+                        <span class="game-rating">★ 4.8</span>
+                        <span>•</span>
+                        <span>Настольная</span>
+                    </div>
+                </div>
+            </a>
         </div>
 
         <!-- Секция: Новинки -->
@@ -722,8 +804,60 @@
                     </div>
                 </div>
             </a>
+
+            <a href="games/dino/index.html" class="game-card" data-title="dino run динозаврик" data-category="аркады">
+                <div class="game-thumb" style="background: linear-gradient(135deg, #33691e 0%, #558b2f 100%);">
+                    <button class="fav-btn" data-game="dino"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
+                    🦖
+                    <div class="play-overlay">
+                        <div class="play-btn">▶</div>
+                    </div>
+                </div>
+                <div class="game-info">
+                    <div class="game-title">Dino Run</div>
+                    <div class="game-meta">
+                        <span class="new-badge" style="color:#4caf50; font-weight:600;">NEW</span>
+                        <span>•</span>
+                        <span>Аркада</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="games/tictactoe/index.html" class="game-card" data-title="крестики нолики tic tac toe" data-category="настольные">
+                <div class="game-thumb" style="background: linear-gradient(135deg, #311b92 0%, #7c4dff 100%);">
+                    <button class="fav-btn" data-game="tictactoe"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
+                    ❌⭕
+                    <div class="play-overlay">
+                        <div class="play-btn">▶</div>
+                    </div>
+                </div>
+                <div class="game-info">
+                    <div class="game-title">Крестики-нолики</div>
+                    <div class="game-meta">
+                        <span class="new-badge" style="color:#4caf50; font-weight:600;">NEW</span>
+                        <span>•</span>
+                        <span>Настольная</span>
+                    </div>
+                </div>
+            </a>
         </div>
     </main>
+
+    <!-- Модальное окно профиля -->
+    <div class="ach-modal" id="profileModal">
+        <div class="ach-modal-content" style="max-width: 560px;">
+            <div class="ach-modal-header">
+                <h2>👤 Профиль</h2>
+                <button class="ach-close" id="profileClose">✕</button>
+            </div>
+            <div class="profile-tabs" style="display:flex;gap:8px;margin-bottom:16px;">
+                <button class="category-btn active" data-tab="stats">Статистика</button>
+                <button class="category-btn" data-tab="records">Рекорды</button>
+            </div>
+            <div id="profileStats"></div>
+            <div id="profileRecords" style="display:none;"></div>
+        </div>
+    </div>
 
     <!-- Модальное окно достижений -->
     <div class="ach-modal" id="achModal">
@@ -975,6 +1109,107 @@
             if (e.target === document.getElementById('achModal')) {
                 document.getElementById('achModal').classList.remove('show');
             }
+        });
+
+        // ====== ПРОФИЛЬ ======
+        function renderProfile() {
+            const played = JSON.parse(localStorage.getItem('gamehub_played') || '[]');
+            const favs = JSON.parse(localStorage.getItem('gamehub_favorites') || '[]');
+            const achs = JSON.parse(localStorage.getItem('gamehub_achievements') || '{}');
+            const unlockedCount = Object.values(achs).filter(a => a.unlocked).length;
+            const arkanoidScores = JSON.parse(localStorage.getItem('arkanoid_leaderboard') || '[]');
+
+            document.getElementById('profileStats').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="background:var(--surface);padding:16px;border-radius:14px;text-align:center;">
+                        <div style="font-size:28px;font-weight:800;color:#ffcc00;">${played.length}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Игр сыграно</div>
+                    </div>
+                    <div style="background:var(--surface);padding:16px;border-radius:14px;text-align:center;">
+                        <div style="font-size:28px;font-weight:800;color:#ffcc00;">${favs.length}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">В избранном</div>
+                    </div>
+                    <div style="background:var(--surface);padding:16px;border-radius:14px;text-align:center;">
+                        <div style="font-size:28px;font-weight:800;color:#ffcc00;">${unlockedCount}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Достижений</div>
+                    </div>
+                    <div style="background:var(--surface);padding:16px;border-radius:14px;text-align:center;">
+                        <div style="font-size:28px;font-weight:800;color:#ffcc00;">${Object.keys(achs).length}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Всего ачивок</div>
+                    </div>
+                </div>
+                <div style="margin-top:16px;background:var(--surface);padding:14px;border-radius:14px;">
+                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Прогресс</div>
+                    <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden;">
+                        <div style="height:100%;width:${Math.round((unlockedCount / ACHIEVEMENTS.length) * 100)}%;background:#ffcc00;border-radius:5px;transition:width 0.5s;"></div>
+                    </div>
+                    <div style="text-align:right;font-size:12px;color:var(--text-muted);margin-top:4px;">${Math.round((unlockedCount / ACHIEVEMENTS.length) * 100)}%</div>
+                </div>
+            `;
+
+            if (arkanoidScores.length === 0) {
+                document.getElementById('profileRecords').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Пока нет рекордов. Сыграй в Arkanoid! 🧱</p>';
+            } else {
+                document.getElementById('profileRecords').innerHTML = `
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="font-weight:600;margin-bottom:4px;color:var(--text);">🧱 Arkanoid</div>
+                        ${arkanoidScores.slice(0, 5).map((s, i) => `
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface);border-radius:10px;">
+                                <span style="font-weight:600;">#${i+1} — ${s.score} очков</span>
+                                <span style="color:var(--text-muted);font-size:12px;">ур. ${s.level} • ${s.date}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        document.getElementById('profileBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            renderProfile();
+            document.getElementById('profileModal').classList.add('show');
+        });
+
+        document.getElementById('profileClose').addEventListener('click', () => {
+            document.getElementById('profileModal').classList.remove('show');
+        });
+
+        document.getElementById('profileModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('profileModal')) {
+                document.getElementById('profileModal').classList.remove('show');
+            }
+        });
+
+        document.querySelectorAll('.profile-tabs .category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.profile-tabs .category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.getAttribute('data-tab');
+                document.getElementById('profileStats').style.display = tab === 'stats' ? 'block' : 'none';
+                document.getElementById('profileRecords').style.display = tab === 'records' ? 'block' : 'none';
+            });
+        });
+
+        // ====== ТЕМА ======
+        const themeToggle = document.getElementById('themeToggle');
+        let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (!metaThemeColor) {
+            metaThemeColor = document.createElement('meta');
+            metaThemeColor.name = 'theme-color';
+            document.head.appendChild(metaThemeColor);
+        }
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        metaThemeColor.content = savedTheme === 'dark' ? '#0d0d0d' : '#f0f0f5';
+        themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+            metaThemeColor.content = next === 'dark' ? '#0d0d0d' : '#f0f0f5';
         });
 
         // Toast animations CSS
