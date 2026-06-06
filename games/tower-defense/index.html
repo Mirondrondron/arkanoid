@@ -178,7 +178,8 @@
             basic: { hp: 80, speed: 1.5, reward: 10, color: '#ff4444', radius: 10 },
             fast:  { hp: 60, speed: 2.6, reward: 15, color: '#ffcc00', radius: 8 },
             tank:  { hp: 300, speed: 0.9, reward: 25, color: '#888888', radius: 14 },
-            boss:  { hp: 1200, speed: 1.15, reward: 100, color: '#ff00ff', radius: 20 }
+            boss:  { hp: 1200, speed: 1.15, reward: 100, color: '#ff00ff', radius: 20 },
+            ultra: { hp: 45, speed: 4.0, reward: 18, color: '#00ff88', radius: 7 }
         };
 
         let gameState = 'waiting';
@@ -256,8 +257,37 @@
                 [{type:'basic', count:30, interval:8},{type:'tank', count:6, interval:30}],
                 [{type:'fast', count:20, interval:8},{type:'tank', count:8, interval:25}],
                 [{type:'tank', count:12, interval:25},{type:'boss', count:2, interval:90}],
-                [{type:'boss', count:3, interval:120}]
+                [{type:'boss', count:3, interval:120}],
+                // Waves 21-30 (harder)
+                [{type:'basic', count:25, interval:10},{type:'fast', count:15, interval:8},{type:'tank', count:4, interval:40}],
+                [{type:'fast', count:25, interval:8},{type:'boss', count:1, interval:80}],
+                [{type:'tank', count:15, interval:30},{type:'fast', count:15, interval:10}],
+                [{type:'basic', count:35, interval:8},{type:'tank', count:8, interval:25}],
+                [{type:'boss', count:3, interval:100},{type:'tank', count:6, interval:35}],
+                [{type:'fast', count:30, interval:7},{type:'tank', count:10, interval:30}],
+                [{type:'tank', count:15, interval:25},{type:'boss', count:2, interval:90}],
+                [{type:'basic', count:40, interval:7},{type:'fast', count:20, interval:7}],
+                [{type:'boss', count:4, interval:100}],
+                [{type:'ultra', count:20, interval:8},{type:'tank', count:10, interval:30}],
+                // Waves 31-39 (very hard)
+                [{type:'basic', count:30, interval:8},{type:'fast', count:20, interval:7},{type:'tank', count:10, interval:25}],
+                [{type:'boss', count:3, interval:80},{type:'ultra', count:15, interval:10}],
+                [{type:'tank', count:20, interval:25},{type:'fast', count:25, interval:7}],
+                [{type:'ultra', count:30, interval:8},{type:'boss', count:2, interval:90}],
+                [{type:'boss', count:5, interval:90}],
+                [{type:'tank', count:18, interval:22},{type:'ultra', count:20, interval:8}],
+                [{type:'fast', count:35, interval:6},{type:'boss', count:3, interval:80}],
+                [{type:'ultra', count:25, interval:7},{type:'tank', count:15, interval:25},{type:'boss', count:2, interval:85}],
+                [{type:'boss', count:6, interval:85}]
             ];
+            // Final wave 40 — The Crown
+            if (n === 40) {
+                return [
+                    {type:'ultra', count:30, interval:6, hpMul: 3},
+                    {type:'boss', count:10, interval:35, hpMul: 3},
+                    {type:'tank', count:15, interval:25, hpMul: 3}
+                ];
+            }
             return waves[(n-1) % waves.length].map(g => ({
                 ...g,
                 hpMul: 1 + Math.floor((n-1)/waves.length) * 0.6
@@ -442,7 +472,7 @@
                 }
                 if (waveEnemies.length === 0 && enemies.length === 0) {
                     waveActive = false;
-                    if (wave >= 20) {
+                    if (wave >= 40) {
                         gameState = 'victory';
                         document.getElementById('victoryScore').textContent = score;
                         document.getElementById('victoryScreen').classList.remove('hidden');
@@ -783,7 +813,7 @@
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(`💰 ${money}  ❤️ ${lives}  🌊 Волна: ${wave}/20  ⭐ Счёт: ${score}`, 20, UI_Y - 14);
+            ctx.fillText(`💰 ${money}  ❤️ ${lives}  🌊 Волна: ${wave}/40  ⭐ Счёт: ${score}`, 20, UI_Y - 14);
 
             // Tower buttons
             const btns = getTowerButtons();
