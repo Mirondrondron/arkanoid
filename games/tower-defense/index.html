@@ -166,17 +166,17 @@
         const WAYPOINTS = [[0,2],[4,2],[4,6],[10,6],[10,3],[16,3],[16,8],[19,8]];
 
         const TOWER_TYPES = {
-            archer: { name: 'Лучник', cost: 50, range: 130, damage: 18, cooldown: 25, color: '#44ff44', projColor: '#88ff88', speed: 8, splash: 0 },
-            cannon: { name: 'Пушка', cost: 100, range: 100, damage: 45, cooldown: 80, color: '#ff8800', projColor: '#ffaa33', speed: 5, splash: 70 },
-            ice:    { name: 'Лёд', cost: 75, range: 110, damage: 8, cooldown: 40, color: '#00ffff', projColor: '#88ffff', speed: 7, splash: 0, slow: 0.5, slowDur: 90 },
-            laser:  { name: 'Лазер', cost: 125, range: 150, damage: 10, cooldown: 6, color: '#ff4444', projColor: '#ff8888', speed: 20, splash: 0 }
+            archer: { name: 'Лучник', cost: 70, range: 130, damage: 18, cooldown: 25, color: '#44ff44', projColor: '#88ff88', speed: 8, splash: 0 },
+            cannon: { name: 'Пушка', cost: 140, range: 100, damage: 45, cooldown: 80, color: '#ff8800', projColor: '#ffaa33', speed: 5, splash: 70 },
+            ice:    { name: 'Лёд', cost: 100, range: 110, damage: 8, cooldown: 40, color: '#00ffff', projColor: '#88ffff', speed: 7, splash: 0, slow: 0.5, slowDur: 90 },
+            laser:  { name: 'Лазер', cost: 160, range: 150, damage: 10, cooldown: 6, color: '#ff4444', projColor: '#ff8888', speed: 20, splash: 0 }
         };
 
         const ENEMY_TYPES = {
-            basic: { hp: 80, speed: 1.5, reward: 12, color: '#ff4444', radius: 10 },
-            fast:  { hp: 60, speed: 2.6, reward: 18, color: '#ffcc00', radius: 8 },
-            tank:  { hp: 300, speed: 0.9, reward: 35, color: '#888888', radius: 14 },
-            boss:  { hp: 1200, speed: 0.85, reward: 150, color: '#ff00ff', radius: 20 }
+            basic: { hp: 80, speed: 1.5, reward: 8, color: '#ff4444', radius: 10 },
+            fast:  { hp: 60, speed: 2.6, reward: 12, color: '#ffcc00', radius: 8 },
+            tank:  { hp: 300, speed: 0.9, reward: 20, color: '#888888', radius: 14 },
+            boss:  { hp: 1200, speed: 0.85, reward: 80, color: '#ff00ff', radius: 20 }
         };
 
         let gameState = 'waiting';
@@ -379,8 +379,8 @@
             }
             // Upgrade / sell buttons
             if (selectedTower) {
-                const upCost = Math.floor(selectedTower.cost * 0.7 * selectedTower.level);
-                const sellPrice = Math.floor(selectedTower.cost * 0.5 * selectedTower.level);
+                const upCost = Math.floor(selectedTower.cost * 0.9 * selectedTower.level);
+                const sellPrice = Math.floor(selectedTower.cost * 0.35 * selectedTower.level);
                 const ux = canvas.width - 200, uy = UI_Y + 10;
                 if (mx >= ux && mx <= ux+90 && my >= uy && my <= uy+BTN_H) {
                     if (money >= upCost) {
@@ -760,8 +760,8 @@
                 ctx.fillText(`${selectedTower.name} (ур. ${selectedTower.level})`, ux+8, uy+18);
                 ctx.fillText(`💰${Math.floor(selectedTower.damage)} ⚔️ ${Math.floor(selectedTower.range)}`, ux+8, uy+34);
 
-                const upCost = Math.floor(selectedTower.cost * 0.7 * selectedTower.level);
-                const sellPrice = Math.floor(selectedTower.cost * 0.5 * selectedTower.level);
+                const upCost = Math.floor(selectedTower.cost * 0.9 * selectedTower.level);
+                const sellPrice = Math.floor(selectedTower.cost * 0.35 * selectedTower.level);
 
                 // Upgrade btn
                 ctx.fillStyle = money >= upCost ? '#4488ff' : '#333';
@@ -788,7 +788,7 @@
 
         function resetGame() {
             gameState = 'playing';
-            money = 150; lives = 20; wave = 0; score = 0;
+            money = 100; lives = 20; wave = 0; score = 0;
             towers = []; enemies = []; projectiles = []; particles = [];
             selectedTowerType = null; selectedTower = null;
             waveActive = false; waveEnemies = []; waveTimer = 0;
