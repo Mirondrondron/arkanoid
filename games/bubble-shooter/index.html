@@ -425,12 +425,12 @@
             // Move everything down by 1 row
             for (let r = MAX_ROWS - 1; r > 0; r--) {
                 const cols = getCols(r);
+                const prevCols = getCols(r - 1);
                 for (let c = 0; c < cols; c++) {
-                    grid[r][c] = grid[r-1][c] || null;
-                    if (grid[r][c] && r % 2 !== (r-1) % 2) {
-                        // If row parity changed, we might need to adjust col
-                        // For simplicity, just clear edge balls on parity change
-                        if (c >= getCols(r)) grid[r][c] = null;
+                    if (c < prevCols) {
+                        grid[r][c] = grid[r - 1][c];
+                    } else {
+                        grid[r][c] = null;
                     }
                 }
             }
@@ -494,11 +494,10 @@
             // Wall bounce
             if (b.x - R < 0) { b.x = R; b.dx = -b.dx; playSound('wall'); }
             if (b.x + R > canvas.width) { b.x = canvas.width - R; b.dx = -b.dx; playSound('wall'); }
-            // Ceiling
-            if (b.y - R < 0) { b.y = R; b.dy = -b.dy; playSound('wall'); }
 
             // Collision with grid balls
             let hit = false;
+            let hitR = -1, hitC = -1;
             for (let r = 0; r < MAX_ROWS && !hit; r++) {
                 for (let c = 0; c < getCols(r) && !hit; c++) {
                     if (!grid[r][c]) continue;
@@ -506,35 +505,55 @@
                     const dist = Math.hypot(b.x - pos.x, b.y - pos.y);
                     if (dist < R * 1.85) {
                         hit = true;
-                        // Find nearest empty cell
-                        const best = findNearestEmpty(b.x, b.y);
-                        if (best) {
-                            grid[best.r][best.c] = { color: b.color, active: true };
-                            handleMatch(best.r, best.c);
-                        }
-                        flyingBubble = null;
-                        break;
+                        hitR = r; hitC = c;
                     }
                 }
             }
-            // If went too high without hitting
-            if (!hit && b.y < R + 10) {
-                const best = findNearestEmpty(b.x, b.y);
+
+            if (hit) {
+                const best = findNearestEmpty(b.x, b.y, hitR, hitC);
                 if (best) {
                     grid[best.r][best.c] = { color: b.color, active: true };
                     handleMatch(best.r, best.c);
                 }
                 flyingBubble = null;
+            } else if (b.y - R < 10) {
+                // Hit ceiling — snap to top row
+                const pos = getGridPos(b.x, b.y);
+                if (pos && !grid[pos.row][pos.col]) {
+                    grid[pos.row][pos.col] = { color: b.color, active: true };
+                    handleMatch(pos.row, pos.col);
+                } else {
+                    const best = findNearestEmpty(b.x, b.y, 0, 0);
+                    if (best) {
+                        grid[best.r][best.c] = { color: b.color, active: true };
+                        handleMatch(best.r, best.c);
+                    }
+                }
+                flyingBubble = null;
             }
         }
 
-        function findNearestEmpty(x, y) {
-            // Try exact grid pos first
+        function findNearestEmpty(x, y, nearR, nearC) {
+            // Prefer exact grid position first
             let pos = getGridPos(x, y);
-            if (pos && !grid[pos.row][pos.col]) return pos;
-            // Search nearby
+            if (pos && !grid[pos.row][pos.col]) return { r: pos.row, c: pos.col };
+            // Search among neighbors of the hit cell
+            const neighbors = getNeighbors(nearR, nearC);
             let best = null, bestDist = Infinity;
-            for (let r = 0; r < MAX_ROWS; r++) {
+            for (const n of neighbors) {
+                if (grid[n.r] && grid[n.r][n.c] === null) {
+                    const p = getXY(n.r, n.c);
+                    const d = Math.hypot(x - p.x, y - p.y);
+                    if (d < bestDist) { bestDist = d; best = n; }
+                }
+            }
+            if (best) return best;
+            // Fallback: search nearby rows only
+            bestDist = Infinity;
+            const startR = Math.max(0, nearR - 2);
+            const endR = Math.min(MAX_ROWS - 1, nearR + 2);
+            for (let r = startR; r <= endR; r++) {
                 for (let c = 0; c < getCols(r); c++) {
                     if (grid[r][c]) continue;
                     const p = getXY(r, c);
@@ -546,6 +565,7 @@
         }
 
         function handleMatch(r, c) {
+            if (!grid[r] || !grid[r][c]) return;
             const color = grid[r][c].color;
             const group = findGroup(r, c, color);
             if (group.length >= 3) {
@@ -752,21 +772,22 @@
         }
 
         function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            updateFlying();
-            updateParticles();
-            updateFalling();
-
-            drawCeilingLine();
-            drawGrid();
-            drawFlying();
-            drawFalling();
-            drawParticles();
-            drawAimLine();
-            drawCannon();
-
             requestAnimationFrame(gameLoop);
+            try {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                updateFlying();
+                updateParticles();
+                updateFalling();
+                drawCeilingLine();
+                drawGrid();
+                drawFlying();
+                drawFalling();
+                drawParticles();
+                drawAimLine();
+                drawCannon();
+            } catch (e) {
+                console.error('Game loop error:', e);
+            }
         }
 
         // Buttons
