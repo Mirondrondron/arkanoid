@@ -86,7 +86,7 @@
     </div>
 
     <div id="gameWrap">
-        <canvas id="game" width="960" height="640"></canvas>
+        <canvas id="game" width="960" height="700"></canvas>
 
         <div class="overlay" id="startScreen">
             <h2>🏰 Tower Defense</h2>
@@ -162,7 +162,7 @@
 
         // Game config
         const TILE = 48;
-        const GW = 20, GH = 13;
+        const GW = 20, GH = 12;
         const WAYPOINTS = [[0,2],[4,2],[4,6],[10,6],[10,3],[16,3],[16,8],[19,8]];
 
         const TOWER_TYPES = {
@@ -295,13 +295,6 @@
             mouseX = (e.clientX-rect.left)*(canvas.width/rect.width);
             mouseY = (e.clientY-rect.top)*(canvas.height/rect.height);
         });
-        canvas.addEventListener('click', e => {
-            const rect = canvas.getBoundingClientRect();
-            const mx = (e.clientX-rect.left)*(canvas.width/rect.width);
-            const my = (e.clientY-rect.top)*(canvas.height/rect.height);
-            handleClick(mx,my);
-        });
-
         function handleClick(mx, my) {
             if (gameState !== 'playing') return;
             const tx = Math.floor(mx/TILE), ty = Math.floor(my/TILE);
@@ -327,6 +320,7 @@
                         type: selectedTowerType,
                         level: 1,
                         cooldown: 0,
+                        cooldownMax: type.cooldown,
                         ...type
                     });
                     playSound('build');
@@ -503,7 +497,7 @@
                         }
                     });
                     if (best) {
-                        t.cooldown = t.cooldownMax || t.cooldown;
+                        t.cooldown = t.cooldownMax;
                         const angle = Math.atan2(best.y - t.y, best.x - t.x);
                         projectiles.push({
                             x: t.x, y: t.y,
@@ -738,7 +732,7 @@
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(`💰 ${money}  ❤️ ${lives}  🌊 Волна: ${wave}/20  ⭐ Счёт: ${score}`, 20, UI_Y - 10);
+            ctx.fillText(`💰 ${money}  ❤️ ${lives}  🌊 Волна: ${wave}/20  ⭐ Счёт: ${score}`, 20, UI_Y - 14);
 
             // Tower buttons
             const btns = getTowerButtons();
