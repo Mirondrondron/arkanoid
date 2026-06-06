@@ -86,7 +86,7 @@
     </div>
 
     <div id="gameWrap">
-        <canvas id="game" width="960" height="700"></canvas>
+        <canvas id="game" width="960" height="720"></canvas>
 
         <div class="overlay" id="startScreen">
             <h2>🏰 Tower Defense</h2>
@@ -336,15 +336,15 @@
         }
 
         // UI buttons (drawn on canvas)
-        const UI_Y = GH*TILE + 4;
-        const UI_H = 640 - UI_Y;
-        const BTN_W = 72, BTN_H = 34;
+        const UI_Y = GH*TILE + 8;
+        const UI_H = 720 - UI_Y;
+        const BTN_W = 80, BTN_H = 40;
 
         function getTowerButtons() {
             const btns = [];
             const types = Object.keys(TOWER_TYPES);
             const startX = 16;
-            const gap = 6;
+            const gap = 8;
             types.forEach((key,i) => {
                 btns.push({
                     x: startX + i*(BTN_W+gap), y: UI_Y + 10,
@@ -791,13 +791,16 @@
                 const isSel = b.type && selectedTowerType === b.type;
                 ctx.fillStyle = isSel ? '#ffcc00' : (b.color || '#2a2a2a');
                 ctx.fillRect(b.x, b.y, b.w, b.h);
+                ctx.strokeStyle = isSel ? '#fff' : '#444';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(b.x, b.y, b.w, b.h);
                 ctx.fillStyle = isSel ? '#000' : '#fff';
-                ctx.font = 'bold 12px sans-serif';
+                ctx.font = 'bold 13px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(b.label, b.x+b.w/2, b.y+16);
-                ctx.font = '11px sans-serif';
-                if (b.cost) ctx.fillText(`${b.cost}💰`, b.x+b.w/2, b.y+30);
-                if (b.action === 'startWave') ctx.fillText(b.label, b.x+b.w/2, b.y+23);
+                ctx.fillText(b.label, b.x+b.w/2, b.y+18);
+                ctx.font = '12px sans-serif';
+                if (b.cost) ctx.fillText(`${b.cost}💰`, b.x+b.w/2, b.y+34);
+                if (b.action === 'startWave') ctx.fillText(b.label, b.x+b.w/2, b.y+26);
             });
 
             // Tower info panel
